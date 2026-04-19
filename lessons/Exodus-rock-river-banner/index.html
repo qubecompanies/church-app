@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Rock, The River, The Banner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --bg-deep: #080c14;
+            --bg-mid: #0f1520;
+            --bg-card: rgba(201,165,90,0.06);
+            --gold: #c9a55a;
+            --gold-light: #e2c97e;
+            --gold-dim: #8b7355;
+            --gold-glow: rgba(201,165,90,0.25);
+            --gold-glow-strong: rgba(201,165,90,0.5);
+            --text: #e8e2d6;
+            --text-dim: #9a9283;
+            --text-faint: #5c5549;
+            --surface: rgba(255,255,255,0.04);
+            --surface-border: rgba(201,165,90,0.15);
+            --danger: #c0392b;
+            --success: #27ae60;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html,body{height:100%;overflow:hidden;background:var(--bg-deep);color:var(--text);font-family:'Source Sans 3',sans-serif;-webkit-font-smoothing:antialiased;}
+        body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;}
+        #ambient-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.4;}
+        ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px;}
+        .cinzel{font-family:'Cinzel',serif;}
+        .mode-container{display:none;height:100%;width:100%;overflow:hidden;position:relative;z-index:1;}
+        .mode-container.active{display:flex;flex-direction:column;}
+        .act-section{display:none;flex-direction:column;flex:1;overflow:hidden;animation:actFadeIn 0.8s ease;}
+        .act-section.active{display:flex;}
+        @keyframes actFadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+        /* DISPLAY */
+        #display-mode{background:radial-gradient(ellipse at 50% 25%,#151d30 0%,var(--bg-deep) 70%);}
+        .display-header{text-align:center;padding:28px 40px 16px;flex-shrink:0;}
+        .display-header .act-label{font-family:'Cinzel',serif;font-size:13px;font-weight:600;letter-spacing:5px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+        .display-header h1{font-family:'Cinzel',serif;font-size:clamp(28px,4vw,52px);font-weight:700;color:var(--text);line-height:1.15;text-shadow:0 2px 20px rgba(201,165,90,0.15);}
+        .display-header .scripture-ref{font-size:16px;font-weight:300;font-style:italic;color:var(--gold-dim);margin-top:6px;}
+        .display-header .prompt-text{font-size:18px;color:var(--text-dim);margin-top:12px;max-width:700px;margin-left:auto;margin-right:auto;}
+        .display-body{flex:1;overflow-y:auto;padding:0 40px 30px;}
+
+        .live-counter{position:fixed;top:20px;right:30px;z-index:10;display:none;align-items:center;gap:8px;background:rgba(201,165,90,0.08);border:1px solid var(--surface-border);border-radius:30px;padding:6px 16px;}
+        .live-counter .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse 2s ease infinite;}
+        .live-counter .counter-text{font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;color:var(--gold);}
+        @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 var(--gold-glow);}50%{opacity:0.6;box-shadow:0 0 0 6px transparent;}}
+
+        .join-toast{position:fixed;top:70px;right:30px;z-index:20;background:rgba(201,165,90,0.12);border:1px solid var(--gold-dim);border-radius:10px;padding:10px 18px;font-size:14px;color:var(--gold-light);animation:toastIn 0.5s ease,toastOut 0.5s ease 2.5s forwards;pointer-events:none;}
+        @keyframes toastIn{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+        @keyframes toastOut{from{opacity:1;}to{opacity:0;transform:translateY(-10px);}}
+
+        .welcome-layout{display:flex;height:100%;align-items:center;justify-content:center;gap:60px;}
+        .welcome-left{text-align:center;}
+        .welcome-left h1{font-family:'Cinzel',serif;font-size:clamp(32px,5vw,64px);font-weight:900;color:var(--text);line-height:1.15;text-shadow:0 4px 30px rgba(201,165,90,0.2);}
+        .welcome-left .subtitle{font-family:'Cinzel',serif;font-size:clamp(14px,2vw,20px);font-weight:400;letter-spacing:4px;color:var(--gold);margin-top:12px;}
+        .welcome-left .scan-text{font-size:16px;color:var(--text-dim);margin-top:30px;}
+        .qr-container{background:#fff;padding:16px;border-radius:12px;display:inline-block;margin-top:16px;}
+        .qr-container img{display:block;width:200px;height:200px;}
+        .welcome-right{width:380px;max-height:70vh;overflow-y:auto;}
+        .student-count-badge{text-align:center;font-family:'Cinzel',serif;font-size:14px;letter-spacing:3px;color:var(--gold-dim);margin-bottom:16px;}
+        .student-count-badge span{color:var(--gold);font-size:22px;font-weight:700;}
+
+        .response-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;padding-bottom:20px;}
+        .response-card{background:var(--bg-card);border:1px solid var(--surface-border);border-radius:10px;padding:18px 20px;animation:cardIn 0.6s ease both;transition:border-color 0.3s,box-shadow 0.3s;}
+        .response-card:hover{border-color:var(--gold);}
+        .response-card .card-text{font-size:17px;line-height:1.5;color:var(--text);}
+        .response-card .card-meta{font-size:12px;color:var(--text-faint);margin-top:8px;font-style:italic;}
+        @keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(0.96);}to{opacity:1;transform:translateY(0) scale(1);}}
+        .response-card.glow-enter{animation:cardGlowIn 0.8s ease both;}
+        @keyframes cardGlowIn{0%{opacity:0;transform:translateY(20px) scale(0.92);box-shadow:0 0 40px var(--gold-glow-strong);}60%{opacity:1;transform:translateY(-2px) scale(1.02);box-shadow:0 0 30px var(--gold-glow);}100%{opacity:1;transform:translateY(0) scale(1);box-shadow:0 0 0 transparent;}}
+        .response-card.reverent-enter{animation:reverentIn 1.2s ease both;}
+        @keyframes reverentIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+        .poll-display{max-width:800px;margin:0 auto;padding:30px 0;}
+        .poll-scenario{font-size:clamp(20px,3vw,28px);text-align:center;color:var(--text);line-height:1.5;margin-bottom:40px;font-style:italic;}
+        .poll-bar-group{margin-bottom:28px;}
+        .poll-bar-label{font-family:'Cinzel',serif;font-size:16px;letter-spacing:2px;color:var(--gold);margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline;}
+        .poll-bar-label .count{font-family:'Source Sans 3',sans-serif;font-size:28px;font-weight:700;}
+        .poll-bar-track{background:var(--surface);border-radius:8px;height:48px;overflow:hidden;border:1px solid var(--surface-border);}
+        .poll-bar-fill{height:100%;border-radius:8px;transition:width 0.8s cubic-bezier(0.25,0.46,0.45,0.94);min-width:0;}
+        .poll-bar-fill.trust{background:linear-gradient(90deg,var(--gold),var(--gold-light));box-shadow:0 0 20px var(--gold-glow);}
+        .poll-bar-fill.struggle{background:linear-gradient(90deg,#5a4a3a,#7a6a5a);}
+
+        .arms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;padding-bottom:20px;}
+        .arms-card{background:var(--bg-card);border:1px solid var(--surface-border);border-radius:10px;padding:16px 18px;text-align:center;}
+        .arms-card .arms-name{font-family:'Cinzel',serif;font-size:18px;font-weight:600;color:var(--gold);}
+        .arms-card .arms-action{font-size:14px;color:var(--text-dim);margin-top:6px;line-height:1.4;}
+
+        /* CINEMATIC CLOSE */
+        .close-display{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px;}
+        .close-display .title-line{font-family:'Cinzel',serif;font-size:clamp(28px,5vw,56px);font-weight:900;color:var(--text);opacity:0;animation:cinematicUp 2s ease forwards;text-shadow:0 4px 40px rgba(201,165,90,0.2);}
+        .close-display .hebrew{font-size:18px;color:var(--gold-dim);letter-spacing:3px;margin-top:8px;opacity:0;animation:cinematicUp 1.5s ease forwards;animation-delay:1.8s;}
+        .close-divider-line{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:40px auto;opacity:0;animation:cinematicUp 1.5s ease forwards;animation-delay:3.2s;}
+        .close-lines-wrap .close-line{font-size:clamp(18px,2.5vw,26px);color:var(--text);line-height:2.2;opacity:0;}
+        .close-lines-wrap .close-line .em{color:var(--gold);font-weight:600;}
+        .close-lines-wrap .close-line:nth-child(1){animation:cinematicUp 1.8s ease forwards;animation-delay:4.0s;}
+        .close-lines-wrap .close-line:nth-child(2){animation:cinematicUp 1.8s ease forwards;animation-delay:6.0s;}
+        .close-lines-wrap .close-line:nth-child(3){animation:cinematicUp 1.8s ease forwards;animation-delay:8.0s;}
+        .close-final-divider{width:40px;height:1px;background:var(--gold-dim);margin:40px auto;opacity:0;animation:cinematicUp 1.5s ease forwards;animation-delay:10.0s;}
+        .close-truths-section{margin-top:10px;max-height:25vh;overflow-y:auto;width:100%;max-width:900px;opacity:0;animation:cinematicUp 1.5s ease forwards;animation-delay:11.0s;}
+        .close-truths-title{font-family:'Cinzel',serif;font-size:13px;letter-spacing:4px;color:var(--gold-dim);margin-bottom:16px;}
+        @keyframes cinematicUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+        .video-container{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:20px;}
+        .video-container .video-label{font-family:'Cinzel',serif;font-size:13px;letter-spacing:5px;color:var(--gold);margin-bottom:16px;}
+        .video-wrapper{width:min(90vw,960px);aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:1px solid var(--surface-border);box-shadow:0 8px 40px rgba(0,0,0,0.5);}
+        .video-wrapper iframe{width:100%;height:100%;border:none;}
+
+        /* STUDENT */
+        #student-mode{background:var(--bg-deep);overflow-y:auto;}
+        .student-progress{display:flex;align-items:center;gap:0;padding:12px 20px 0;flex-shrink:0;}
+        .progress-step{flex:1;height:3px;border-radius:2px;background:var(--surface);transition:background 0.6s;}
+        .progress-step.done{background:var(--gold);}
+        .progress-step.active{background:linear-gradient(90deg,var(--gold),var(--gold-light));box-shadow:0 0 8px var(--gold-glow);}
+        .progress-gap{width:6px;}
+        .student-header{text-align:center;padding:20px 20px 16px;border-bottom:1px solid var(--surface-border);flex-shrink:0;}
+        .student-header .act-chip{display:inline-block;font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);background:rgba(201,165,90,0.1);padding:4px 14px;border-radius:20px;border:1px solid var(--surface-border);margin-bottom:8px;}
+        .student-header h2{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--text);line-height:1.3;}
+        .student-header .ref{font-size:14px;font-style:italic;color:var(--gold-dim);margin-top:4px;}
+        .student-body{flex:1;overflow-y:auto;padding:20px;}
+        .scripture-excerpt{background:var(--surface);border-left:3px solid var(--gold-dim);padding:14px 16px;margin-bottom:20px;border-radius:0 8px 8px 0;font-size:14px;line-height:1.7;color:var(--text-dim);font-style:italic;}
+        .scripture-excerpt .verse-num{font-weight:700;color:var(--gold-dim);font-style:normal;font-size:11px;vertical-align:super;}
+        .prompt-label{font-size:17px;color:var(--text);margin-bottom:12px;line-height:1.5;}
+        .input-area{width:100%;background:var(--surface);border:1px solid var(--surface-border);border-radius:10px;padding:14px 16px;font-family:'Source Sans 3',sans-serif;font-size:16px;color:var(--text);resize:none;outline:none;transition:border-color 0.3s;-webkit-appearance:none;}
+        .input-area:focus{border-color:var(--gold);}.input-area::placeholder{color:var(--text-faint);}
+        textarea.input-area{min-height:80px;}
+        .btn{display:block;width:100%;padding:14px 20px;border:none;border-radius:10px;font-family:'Cinzel',serif;font-size:15px;font-weight:600;letter-spacing:2px;cursor:pointer;transition:all 0.3s;text-transform:uppercase;margin-top:14px;}
+        .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--bg-deep);}
+        .btn-gold:hover{box-shadow:0 4px 20px var(--gold-glow);transform:translateY(-1px);}
+        .btn-gold:active{transform:translateY(0);}
+        .btn-outline{background:transparent;border:1px solid var(--surface-border);color:var(--text-dim);}
+        .btn-outline:hover{border-color:var(--gold);color:var(--gold);}
+        .submit-confirmation{text-align:center;padding:20px;color:var(--gold);font-size:15px;animation:actFadeIn 0.5s ease;}
+        .submit-confirmation .check{font-size:36px;display:block;margin-bottom:8px;animation:checkPop 0.5s ease;}
+        @keyframes checkPop{0%{transform:scale(0);}60%{transform:scale(1.3);}100%{transform:scale(1);}}
+        .poll-btn-group{display:flex;flex-direction:column;gap:12px;margin-top:16px;}
+        .poll-btn{padding:20px;border-radius:12px;border:2px solid var(--surface-border);background:var(--surface);color:var(--text);font-family:'Cinzel',serif;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s;text-align:center;}
+        .poll-btn:hover{border-color:var(--gold);background:var(--bg-card);}
+        .poll-btn:active{transform:scale(0.98);}
+        .poll-btn .poll-btn-sub{display:block;font-family:'Source Sans 3',sans-serif;font-size:13px;font-weight:400;color:var(--text-dim);margin-top:4px;letter-spacing:0;}
+        .waiting-state{text-align:center;padding:60px 20px;color:var(--text-dim);}
+        .waiting-state .icon{font-size:40px;display:block;margin-bottom:12px;}
+
+        /* TEACHER */
+        #teacher-mode{background:var(--bg-deep);}
+        .teacher-header{text-align:center;padding:20px;border-bottom:1px solid var(--surface-border);flex-shrink:0;}
+        .teacher-header h2{font-family:'Cinzel',serif;font-size:18px;color:var(--gold);letter-spacing:3px;}
+        .teacher-body{flex:1;overflow-y:auto;padding:20px;}
+        .teacher-current{text-align:center;padding:24px;background:var(--surface);border:1px solid var(--surface-border);border-radius:12px;margin-bottom:20px;}
+        .teacher-current .current-label{font-size:12px;letter-spacing:3px;color:var(--text-faint);text-transform:uppercase;margin-bottom:6px;}
+        .teacher-current .current-act{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--gold);}
+        .teacher-current .current-sub{font-size:13px;color:var(--text-dim);margin-top:4px;}
+        .cue-card{background:rgba(201,165,90,0.05);border:1px solid var(--surface-border);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:14px;line-height:1.7;color:var(--text-dim);animation:actFadeIn 0.5s ease;}
+        .cue-card .cue-title{font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:var(--gold-dim);text-transform:uppercase;margin-bottom:8px;}
+        .cue-card ul{list-style:none;padding:0;}
+        .cue-card li{position:relative;padding-left:14px;margin-bottom:6px;}
+        .cue-card li::before{content:'\203A';position:absolute;left:0;color:var(--gold);font-weight:700;}
+        .cue-card .cue-scripture{color:var(--gold-dim);font-style:italic;font-size:12px;}
+        .teacher-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+        .stat-card{background:var(--surface);border:1px solid var(--surface-border);border-radius:10px;padding:14px;text-align:center;}
+        .stat-card .stat-num{font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:var(--gold);}
+        .stat-card .stat-label{font-size:11px;letter-spacing:2px;color:var(--text-faint);text-transform:uppercase;margin-top:2px;}
+        .teacher-nav{display:flex;gap:12px;margin-bottom:16px;}
+        .teacher-nav .btn{flex:1;margin-top:0;font-size:13px;}
+        .teacher-acts{margin-bottom:20px;}
+        .teacher-act-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background 0.2s;}
+        .teacher-act-item:hover{background:var(--surface);}
+        .teacher-act-item.current{background:var(--bg-card);border:1px solid var(--surface-border);}
+        .teacher-act-item .act-dot{width:10px;height:10px;border-radius:50%;background:var(--text-faint);flex-shrink:0;}
+        .teacher-act-item.current .act-dot{background:var(--gold);box-shadow:0 0 8px var(--gold-glow);}
+        .teacher-act-item.completed .act-dot{background:var(--success);}
+        .teacher-act-item .act-info .act-name{font-size:14px;font-weight:600;color:var(--text);}
+        .teacher-act-item.current .act-info .act-name{color:var(--gold);}
+        .teacher-act-item .act-info .act-desc{font-size:11px;color:var(--text-faint);}
+        .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);font-size:12px;}
+        .btn-danger:hover{background:rgba(192,57,43,0.1);}
+
+        /* REACTIONS & FEED */
+        .student-feed{margin-top:20px;border-top:1px solid var(--surface-border);padding-top:16px;}
+        .feed-title{font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:var(--gold-dim);text-transform:uppercase;margin-bottom:12px;text-align:center;}
+        .feed-card{background:var(--surface);border:1px solid var(--surface-border);border-radius:10px;padding:12px 14px;margin-bottom:10px;animation:actFadeIn 0.5s ease;}
+        .feed-card .feed-text{font-size:14px;line-height:1.5;color:var(--text-dim);}
+        .feed-card .feed-author{font-size:11px;color:var(--text-faint);margin-top:4px;font-style:italic;}
+        .feed-reactions{display:flex;gap:6px;margin-top:8px;}
+        .react-btn{background:rgba(201,165,90,0.08);border:1px solid var(--surface-border);border-radius:20px;padding:4px 10px;font-size:16px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:4px;}
+        .react-btn:hover{border-color:var(--gold);background:rgba(201,165,90,0.15);}
+        .react-btn:active{transform:scale(0.92);}
+        .react-btn.reacted{border-color:var(--gold);background:rgba(201,165,90,0.2);}
+        .react-btn .react-count{font-size:12px;color:var(--gold-dim);font-family:'Source Sans 3',sans-serif;}
+        .react-btn.reacted .react-count{color:var(--gold);}
+        /* Display card reaction counts */
+        .card-reactions{display:flex;gap:6px;margin-top:8px;}
+        .card-react-badge{font-size:13px;color:var(--gold-dim);display:flex;align-items:center;gap:3px;}
+        .card-react-badge span{font-size:11px;}
+        /* Content filter warning */
+        .filter-warning{background:rgba(192,57,43,0.1);border:1px solid rgba(192,57,43,0.3);border-radius:10px;padding:12px 16px;margin-top:10px;font-size:14px;color:#e8a090;text-align:center;animation:actFadeIn 0.3s ease;}
+
+        @media(max-width:768px){
+            .welcome-layout{flex-direction:column;gap:30px;padding:20px;}
+            .welcome-right{width:100%;max-height:40vh;}
+            .qr-container img{width:160px;height:160px;}
+            .response-grid{grid-template-columns:1fr;}
+            .display-header{padding:16px 20px 10px;}
+            .display-body{padding:0 20px 20px;}
+            .live-counter{top:10px;right:14px;padding:4px 12px;}
+        }
+    </style>
+</head>
+<body>
+<canvas id="ambient-canvas"></canvas>
+
+<!-- DISPLAY MODE -->
+<div id="display-mode" class="mode-container">
+    <div class="live-counter" id="d-live-counter"><div class="pulse-dot"></div><div class="counter-text"><span id="d-response-counter">0</span> RESPONSES</div></div>
+    <div id="d-toast-area"></div>
+
+    <div id="d-welcome" class="act-section">
+        <div class="welcome-layout">
+            <div class="welcome-left">
+                <h1 class="cinzel">The Rock,<br>The River,<br>The Banner</h1>
+                <div class="subtitle">EXODUS 15 &amp; 17</div>
+                <div class="scan-text">Scan to join the lesson</div>
+                <div class="qr-container"><img id="qr-code" alt="QR Code" src=""></div>
+            </div>
+            <div class="welcome-right">
+                <div class="student-count-badge">JOINED: <span id="d-student-count">0</span></div>
+                <div id="d-welcome-responses" class="response-grid" style="grid-template-columns:1fr;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="d-video" class="act-section">
+        <div class="video-container">
+            <div class="video-label">SETTING THE STAGE</div>
+            <div class="video-wrapper"><iframe id="yt-player" src="https://www.youtube.com/embed/jH_aojNJM3E?rel=0&modestbranding=1&start=327" allow="autoplay;encrypted-media" allowfullscreen></iframe></div>
+            <div style="margin-top:16px;font-size:14px;color:var(--text-faint);">BibleProject — Exodus 1–18 Overview</div>
+        </div>
+    </div>
+
+    <div id="d-act1" class="act-section">
+        <div class="display-header"><div class="act-label">ACT I</div><h1>Bitter Water</h1><div class="scripture-ref">Exodus 15:22–27</div><div class="prompt-text">What truths about God do you see in this account?</div></div>
+        <div class="display-body"><div id="d-truths-grid" class="response-grid"></div></div>
+    </div>
+
+    <div id="d-act2" class="act-section">
+        <div class="display-header"><div class="act-label">ACT II</div><h1>Water from the Rock</h1><div class="scripture-ref">Exodus 17:1–7</div></div>
+        <div class="display-body"><div class="poll-display"><div id="d-poll-scenario" class="poll-scenario"></div><div class="poll-bar-group"><div class="poll-bar-label"><span>I'd Trust</span><span class="count" id="d-poll-trust-count">0</span></div><div class="poll-bar-track"><div class="poll-bar-fill trust" id="d-poll-trust-bar" style="width:0%"></div></div></div><div class="poll-bar-group"><div class="poll-bar-label"><span>I'd Struggle</span><span class="count" id="d-poll-struggle-count">0</span></div><div class="poll-bar-track"><div class="poll-bar-fill struggle" id="d-poll-struggle-bar" style="width:0%"></div></div></div></div></div>
+    </div>
+
+    <div id="d-act3" class="act-section">
+        <div class="display-header"><div class="act-label">ACT III</div><h1>The Banner</h1><div class="scripture-ref">Exodus 17:8–13</div><div class="prompt-text">Who could you hold up this week?</div></div>
+        <div class="display-body"><div id="d-arms-grid" class="arms-grid"></div></div>
+    </div>
+
+    <div id="d-reflect" class="act-section">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;">
+            <div style="font-size:48px;margin-bottom:20px;opacity:0;animation:cinematicUp 2s ease forwards;">&#x1F54A;</div>
+            <h1 class="cinzel" style="font-size:clamp(28px,4vw,44px);margin-bottom:16px;opacity:0;animation:cinematicUp 2s ease forwards;animation-delay:0.5s;">A Moment of Reflection</h1>
+            <p style="color:var(--text-dim);font-size:20px;max-width:600px;line-height:1.6;opacity:0;animation:cinematicUp 2s ease forwards;animation-delay:1.2s;">Take a moment to write what Heavenly Father<br>would like you to remember from today.</p>
+            <p style="color:var(--text-faint);font-size:15px;margin-top:20px;font-style:italic;opacity:0;animation:cinematicUp 2s ease forwards;animation-delay:2.0s;">Your thoughts are private — between you and God.</p>
+        </div>
+    </div>
+
+    <div id="d-close" class="act-section">
+        <div class="close-display">
+            <div class="title-line">The Lord Is My Banner</div>
+            <div class="hebrew">&#x05D9;&#x05D4;&#x05D5;&#x05D4; &#x05E0;&#x05B4;&#x05E1;&#x05BC;&#x05B4;&#x05D9; — Yahweh Nissi</div>
+            <div class="close-divider-line"></div>
+            <div class="close-lines-wrap">
+                <div class="close-line">When life is <span class="em">bitter</span> — He sweetens it.</div>
+                <div class="close-line">When you're <span class="em">thirsty</span> — He is the Rock.</div>
+                <div class="close-line">When you're <span class="em">weary</span> — He sends people to hold you up.</div>
+            </div>
+            <div class="close-final-divider"></div>
+            <div class="close-truths-section"><div class="close-truths-title">TRUTHS WE DISCOVERED TOGETHER</div><div id="d-close-truths" class="response-grid"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- STUDENT MODE -->
+<div id="student-mode" class="mode-container">
+    <div class="student-progress" id="s-progress">
+        <div class="progress-step" id="prog-0"></div><div class="progress-gap"></div>
+        <div class="progress-step" id="prog-1"></div><div class="progress-gap"></div>
+        <div class="progress-step" id="prog-2"></div><div class="progress-gap"></div>
+        <div class="progress-step" id="prog-3"></div><div class="progress-gap"></div>
+        <div class="progress-step" id="prog-4"></div><div class="progress-gap"></div>
+        <div class="progress-step" id="prog-5"></div><div class="progress-gap"></div>
+        <div class="progress-step" id="prog-6"></div>
+    </div>
+
+    <div id="s-welcome" class="act-section">
+        <div class="student-header"><div class="act-chip">Welcome</div><h2>The Rock, The River,<br>The Banner</h2><div class="ref">Exodus 15 &amp; 17</div></div>
+        <div class="student-body">
+            <div id="s-name-form"><div class="prompt-label">What's your first name?</div><input type="text" class="input-area" id="s-name-input" placeholder="Your first name" autocomplete="off"><button class="btn btn-gold" id="s-name-submit">Join</button></div>
+            <div id="s-welcome-form" style="display:none;"><div class="prompt-label">Describe a time you were desperate for something — really needed it — and it finally came through.</div><textarea class="input-area" id="s-welcome-input" placeholder="Share your experience..." rows="3"></textarea><button class="btn btn-gold" id="s-welcome-submit">Share</button></div>
+            <div id="s-welcome-done" class="submit-confirmation" style="display:none;"><span class="check">&#x2713;</span>Thanks for sharing!<br><span class="text-dim" style="font-size:13px;">Watch the screen up front.</span></div>
+        </div>
+    </div>
+
+    <div id="s-video" class="act-section">
+        <div class="student-header"><div class="act-chip">Setting the Stage</div><h2>Watch the Screen</h2></div>
+        <div class="student-body"><div class="waiting-state"><span class="icon">&#x1F4FA;</span>A short video is playing up front.<br><span class="text-dim" style="font-size:13px;">Sit back and watch.</span></div></div>
+    </div>
+
+    <div id="s-act1" class="act-section">
+        <div class="student-header"><div class="act-chip">Act I — Bitter Water</div><h2>Identifying Truths</h2><div class="ref">Exodus 15:22–27</div></div>
+        <div class="student-body">
+            <div class="scripture-excerpt"><span class="verse-num">22 </span>So Moses brought Israel from the Red sea, and they went out into the wilderness of Shur; and they went three days in the wilderness, and found no water. <span class="verse-num">23 </span>And when they came to Marah, they could not drink of the waters… for they were bitter. <span class="verse-num">25 </span>And he cried unto the Lord; and the Lord shewed him a tree, which when he had cast into the waters, the waters were made sweet.</div>
+            <div id="s-act1-form"><div class="prompt-label">Read the full passage with your group. What truth about God do you see?</div><textarea class="input-area" id="s-act1-input" placeholder="I see that God..." rows="3"></textarea><button class="btn btn-gold" id="s-act1-submit">Submit Truth</button></div>
+            <div id="s-act1-done" class="submit-confirmation" style="display:none;"><span class="check">&#x2713;</span>Truth submitted!<br><span class="text-dim" style="font-size:13px;">Watch the board up front.</span><button class="btn btn-outline" id="s-act1-another" style="margin-top:12px;">Add Another Truth</button><div class="student-feed" id="s-act1-feed"><div class="feed-title">TRUTHS FROM THE CLASS</div><div id="s-act1-feed-list"></div></div></div>
+        </div>
+    </div>
+
+    <div id="s-act2" class="act-section">
+        <div class="student-header"><div class="act-chip">Act II — Water from the Rock</div><h2>Trust or Struggle?</h2><div class="ref">Exodus 17:1–7</div></div>
+        <div class="student-body">
+            <div class="scripture-excerpt"><span class="verse-num">2 </span>Wherefore the people did chide with Moses, and said, Give us water that we may drink… <span class="verse-num">6 </span>Behold, I will stand before thee there upon the rock in Horeb; and thou shalt smite the rock, and there shall come water out of it.</div>
+            <div id="s-poll-area"><div class="prompt-label" id="s-poll-scenario">Loading...</div><div class="poll-btn-group"><button class="poll-btn" onclick="votePoll('trust')">I'd Trust<span class="poll-btn-sub">I'd lean into faith and follow the Lord's lead</span></button><button class="poll-btn" onclick="votePoll('struggle')">I'd Honestly Struggle<span class="poll-btn-sub">I'd probably wrestle with doubt or frustration</span></button></div></div>
+            <div id="s-poll-done" class="submit-confirmation" style="display:none;"><span class="check">&#x2713;</span>Vote recorded!<br><span class="text-dim" style="font-size:13px;">Watch the results up front.</span></div>
+        </div>
+    </div>
+
+    <div id="s-act3" class="act-section">
+        <div class="student-header"><div class="act-chip">Act III — The Banner</div><h2>Holding Up Arms</h2><div class="ref">Exodus 17:8–13</div></div>
+        <div class="student-body">
+            <div class="scripture-excerpt"><span class="verse-num">11 </span>When Moses held up his hand, Israel prevailed: and when he let down his hand, Amalek prevailed. <span class="verse-num">12 </span>But Moses' hands were heavy… and Aaron and Hur stayed up his hands… and his hands were steady until the going down of the sun.</div>
+            <div id="s-act3-form"><div class="prompt-label">Think of someone whose "arms" you could hold up this week.</div><input type="text" class="input-area" id="s-act3-name" placeholder="Their name or role (e.g., My bishop, My mom)"><div class="prompt-label" style="margin-top:14px;">What's one thing you could do to support them?</div><textarea class="input-area" id="s-act3-action" placeholder="I could..." rows="2"></textarea><button class="btn btn-gold" id="s-act3-submit">Submit</button></div>
+            <div id="s-act3-done" class="submit-confirmation" style="display:none;"><span class="check">&#x2713;</span>Submitted!<br><span class="text-dim" style="font-size:13px;">Watch the screen.</span><div class="student-feed" id="s-act3-feed"><div class="feed-title">OUR COMMITMENTS</div><div id="s-act3-feed-list"></div></div></div>
+        </div>
+    </div>
+
+    <div id="s-reflect" class="act-section">
+        <div class="student-header"><div class="act-chip">Personal Reflection</div><h2>Between You &amp; God</h2></div>
+        <div class="student-body">
+            <div style="text-align:center;font-size:32px;margin-bottom:12px;">&#x1F54A;</div>
+            <div class="prompt-label" style="text-align:center;font-style:italic;color:var(--text-dim);margin-bottom:20px;">This is just for you — it will not appear on the screen.</div>
+            <div class="prompt-label">What do you feel Heavenly Father would like you to remember from today?</div>
+            <textarea class="input-area" id="s-reflect-input" placeholder="I feel that..." rows="4"></textarea>
+            <button class="btn btn-gold" id="s-reflect-submit">Save Reflection</button>
+            <div id="s-reflect-done" class="submit-confirmation" style="display:none;"><span class="check">&#x2713;</span>Saved — just for you.</div>
+        </div>
+    </div>
+
+    <div id="s-close" class="act-section">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:30px;">
+            <h2 class="cinzel" style="font-size:28px;margin-bottom:8px;">The Lord Is My Banner</h2>
+            <div style="color:var(--gold-dim);font-size:14px;margin-bottom:30px;">&#x05D9;&#x05D4;&#x05D5;&#x05D4; &#x05E0;&#x05B4;&#x05E1;&#x05BC;&#x05B4;&#x05D9;</div>
+            <div style="color:var(--text);font-size:16px;line-height:2.2;">When life is <span style="color:var(--gold);font-weight:600;">bitter</span> — He sweetens it.<br>When you're <span style="color:var(--gold);font-weight:600;">thirsty</span> — He is the Rock.<br>When you're <span style="color:var(--gold);font-weight:600;">weary</span> — He sends people to hold you up.</div>
+            <div style="width:40px;height:1px;background:var(--gold-dim);margin:30px auto;"></div>
+            <div style="color:var(--text-dim);font-size:14px;">Thank you for being part of today's lesson.</div>
+        </div>
+    </div>
+</div>
+
+<!-- TEACHER MODE -->
+<div id="teacher-mode" class="mode-container">
+    <div class="teacher-header"><h2>TEACHER PANEL</h2></div>
+    <div class="teacher-body">
+        <div class="teacher-current"><div class="current-label">CURRENT ACT</div><div class="current-act" id="t-current-name">Welcome</div><div class="current-sub" id="t-current-desc">Students are joining</div></div>
+        <div id="t-cue-card" class="cue-card"></div>
+        <div class="teacher-stats"><div class="stat-card"><div class="stat-num" id="t-responses">0</div><div class="stat-label">Responses</div></div><div class="stat-card"><div class="stat-num" id="t-poll-num">—</div><div class="stat-label">Active Poll</div></div></div>
+        <div class="teacher-nav"><button class="btn btn-outline" onclick="prevAct()">&#x2190; Previous</button><button class="btn btn-gold" onclick="nextAct()" style="margin-top:0;">Next &#x2192;</button></div>
+        <div id="t-poll-nav" style="display:none;margin-bottom:16px;"><div style="font-size:12px;letter-spacing:2px;color:var(--text-faint);text-transform:uppercase;margin-bottom:8px;">Poll Control</div><div class="teacher-nav"><button class="btn btn-outline" onclick="prevPoll()">&#x2190; Prev Scenario</button><button class="btn btn-gold" onclick="nextPoll()" style="margin-top:0;">Next Scenario &#x2192;</button></div></div>
+        <div class="teacher-acts" id="t-act-list"></div>
+        <div style="margin-top:30px;padding-top:20px;border-top:1px solid var(--surface-border);"><button class="btn btn-danger" onclick="resetSession()">Reset All Data</button></div>
+    </div>
+</div>
+
+<script>
+var IS_DEMO=typeof firebase==='undefined';var db=null;
+if(!IS_DEMO){firebase.initializeApp({apiKey:"AIzaSyAa-V12j-ASGLqpcDU4MN-20uTzsxMh6sk",authDomain:"church-lessons-24392.firebaseapp.com",projectId:"church-lessons-24392",storageBucket:"church-lessons-24392.firebasestorage.app",messagingSenderId:"122319599653",appId:"1:122319599653:web:7719cd478da5d40b59a7cc"});db=firebase.firestore();}
+var demoStore={state:{currentAct:'welcome',activePoll:0},welcome:[],truths:[],polls:{'poll-0':{trust:0,struggle:0},'poll-1':{trust:0,struggle:0},'poll-2':{trust:0,struggle:0}},arms:[]};
+var ACTS=['welcome','video','act1','act2','act3','reflect','close'];
+var ACT_META={welcome:{name:'Welcome',desc:'Students joining & opening question'},video:{name:'Video',desc:'BibleProject Exodus overview'},act1:{name:'Act I \u2014 Bitter Water',desc:'Exodus 15:22\u201327 \u00B7 Truth Board'},act2:{name:'Act II \u2014 Water from the Rock',desc:'Exodus 17:1\u20137 \u00B7 Polls'},act3:{name:'Act III \u2014 The Banner',desc:'Exodus 17:8\u201313 \u00B7 Arms'},reflect:{name:'Reflection',desc:'Private journaling moment'},close:{name:'Close',desc:'Yahweh Nissi'}};
+var POLLS=["You receive your mission call \u2014 it\u2019s somewhere you\u2019ve never heard of, far from everyone you know.","Your bishop asks you to take on a calling that feels way beyond what you think you can handle.","You pray about something that matters deeply to you, and the answer seems to be \u2018not now.\u2019"];
+var CUE_CARDS={welcome:{title:'OPENING',cues:['\u201CPull out your phones, scan the QR code, and answer the question.\u201D','Let responses build. Acknowledge a couple interesting ones.','Transition: \u201CToday we\u2019re talking about a people who were DESPERATE.\u201D']},video:{title:'VIDEO',cues:['Video is cued to ~5:27 (wilderness section). Press play on the TV.','About 2\u20133 minutes. Song of the Sea \u2192 wilderness complaints.','After: \u201CLet\u2019s look at what happened next.\u201D']},act1:{title:'BITTER WATER \u2014 Ex 15:22\u201327',cues:['Divide into 3\u20134 groups. Assign seniors as table captains.','Groups: read, discuss, submit truths via phones.','Debrief: Key doctrine \u2014 God can make bitter experiences sweet.','<span class="cue-scripture">Cross-ref: Alma 36:21 \u2014 bitter \u2192 exquisite joy through Christ</span>']},act2:{title:'WATER FROM THE ROCK \u2014 Ex 17:1\u20137',cues:['\u201CBe honest \u2014 no one sees your name.\u201D Run all 3 polls.','After polls: \u201CGod told Moses to strike the ROCK. Paul teaches that Rock WAS Christ.\u201D','<span class="cue-scripture">1 Cor 10:4 \u2014 \u201Cthat Rock was Christ\u201D \u00B7 1 Nephi 17:29</span>','\u201CThe physical rock pointed to a spiritual reality.\u201D']},act3:{title:'THE BANNER \u2014 Ex 17:8\u201313',cues:['\uD83D\uDCE6 OBJECT LESSON: Student holds heavy books, arms out. Wait for struggle. Two helpers.','Read Ex 17:11\u201312. \u201CWhen Moses held up his hand, Israel prevailed.\u201D','\u201CWho in YOUR life is holding up heavy arms right now?\u201D','After submissions \u2192 Reflect. Give 60\u201390 sec SILENCE.']},reflect:{title:'PRIVATE REFLECTION',cues:['This is the spiritual climax. Protect the silence.','\u201CThis is just between you and God. It will NOT appear on screen.\u201D','Wait at least 90 seconds before Close.']},close:{title:'YAHWEH NISSI',cues:['Three lines fade in slowly on TV. Let them land.','\u201CMoses named it Yahweh Nissi \u2014 The Lord is My Banner.\u201D','Share your testimony. Close with prayer.']}};
+var currentMode='student',currentAct='welcome',activePoll=0,votedPolls={},studentName='',lastWelcomeCount=0;
+try{votedPolls=JSON.parse(localStorage.getItem('sem-voted')||'{}');}catch(e){}
+try{studentName=localStorage.getItem('sem-name')||'';}catch(e){}
+
+function detectMode(){var h=window.location.hash.replace('#','');return h==='display'?'display':h==='teacher'?'teacher':'student';}
+function activateMode(m){currentMode=m;document.querySelectorAll('.mode-container').forEach(function(e){e.classList.remove('active');});document.getElementById(m+'-mode').classList.add('active');if(m==='display'){generateQR();initAmbient();}}
+function generateQR(){var u=window.location.href.split('#')[0];var i=document.getElementById('qr-code');if(i){i.src='https://api.qrserver.com/v1/create-qr-code/?size=250x250&data='+encodeURIComponent(u)+'&format=svg';i.onerror=function(){i.parentElement.innerHTML='<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#333;font-size:12px;text-align:center;">QR loads when deployed</div>';};}}
+function initAmbient(){var c=document.getElementById('ambient-canvas');if(!c)return;var x=c.getContext('2d');c.width=window.innerWidth;c.height=window.innerHeight;var p=[];for(var i=0;i<30;i++)p.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*2+0.5,dx:(Math.random()-0.5)*0.3,dy:-(Math.random()*0.3+0.1),o:Math.random()*0.4+0.1});function d(){x.clearRect(0,0,c.width,c.height);p.forEach(function(pt){x.beginPath();x.arc(pt.x,pt.y,pt.r,0,Math.PI*2);x.fillStyle='rgba(201,165,90,'+pt.o+')';x.fill();pt.x+=pt.dx;pt.y+=pt.dy;if(pt.y<-10){pt.y=c.height+10;pt.x=Math.random()*c.width;}if(pt.x<-10)pt.x=c.width+10;if(pt.x>c.width+10)pt.x=-10;});requestAnimationFrame(d);}d();window.addEventListener('resize',function(){c.width=window.innerWidth;c.height=window.innerHeight;});}
+function updateProgress(a){var idx=ACTS.indexOf(a);for(var i=0;i<ACTS.length;i++){var e=document.getElementById('prog-'+i);if(!e)continue;e.className='progress-step';if(i<idx)e.classList.add('done');else if(i===idx)e.classList.add('active');}}
+function showToast(n){var a=document.getElementById('d-toast-area');if(!a)return;var t=document.createElement('div');t.className='join-toast';t.textContent=n+' joined!';a.appendChild(t);setTimeout(function(){t.remove();},3000);}
+function showAct(a){currentAct=a;var p=currentMode==='display'?'d':currentMode==='teacher'?'t':'s';var c=document.getElementById(currentMode+'-mode');c.querySelectorAll('.act-section').forEach(function(e){e.classList.remove('active');});var t=document.getElementById(p+'-'+a);if(t)t.classList.add('active');if(currentMode==='teacher')updateTeacherUI();if(currentMode==='student')updateProgress(a);var pn=document.getElementById('t-poll-nav');if(pn)pn.style.display=a==='act2'?'block':'none';var lc=document.getElementById('d-live-counter');if(lc)lc.style.display=(a==='act1'||a==='act2'||a==='act3')?'flex':'none';if(currentMode==='display'&&a==='close')loadCloseTruths();if(currentMode==='student'&&a==='welcome'&&studentName){document.getElementById('s-name-form').style.display='none';document.getElementById('s-welcome-form').style.display='block';}}
+function setAct(a,pl){if(IS_DEMO){demoStore.state.currentAct=a;if(typeof pl==='number')demoStore.state.activePoll=pl;processStateUpdate(demoStore.state);}else{var u={currentAct:a};if(typeof pl==='number')u.activePoll=pl;db.collection('seminary-state').doc('config').set(u,{merge:true});}}
+function nextAct(){var i=ACTS.indexOf(currentAct);if(i<ACTS.length-1)setAct(ACTS[i+1],ACTS[i+1]==='act2'?0:undefined);}
+function prevAct(){var i=ACTS.indexOf(currentAct);if(i>0)setAct(ACTS[i-1]);}
+function nextPoll(){if(activePoll<POLLS.length-1){if(IS_DEMO){demoStore.state.activePoll=activePoll+1;processStateUpdate(demoStore.state);}else db.collection('seminary-state').doc('config').set({activePoll:activePoll+1},{merge:true});}}
+function prevPoll(){if(activePoll>0){if(IS_DEMO){demoStore.state.activePoll=activePoll-1;processStateUpdate(demoStore.state);}else db.collection('seminary-state').doc('config').set({activePoll:activePoll-1},{merge:true});}}
+function jumpToAct(a){setAct(a,a==='act2'?0:undefined);}
+function updateTeacherUI(){var m=ACT_META[currentAct];document.getElementById('t-current-name').textContent=m.name;document.getElementById('t-current-desc').textContent=m.desc;document.getElementById('t-poll-num').textContent=currentAct==='act2'?(activePoll+1)+'/'+POLLS.length:'\u2014';var cc=document.getElementById('t-cue-card');var cu=CUE_CARDS[currentAct];if(cu&&cc){cc.innerHTML='<div class="cue-title">'+cu.title+'</div><ul>'+cu.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+'</ul>';cc.style.display='block';}else if(cc)cc.style.display='none';var l=document.getElementById('t-act-list');l.innerHTML=ACTS.map(function(a){var am=ACT_META[a];return '<div class="teacher-act-item '+(a===currentAct?'current':'')+' '+(ACTS.indexOf(a)<ACTS.indexOf(currentAct)?'completed':'')+'" onclick="jumpToAct(\''+a+'\')"><div class="act-dot"></div><div class="act-info"><div class="act-name">'+am.name+'</div><div class="act-desc">'+am.desc+'</div></div></div>';}).join('');}
+function processStateUpdate(d){var na=d.currentAct||'welcome',np=d.activePoll||0;if(np!==activePoll&&currentMode==='student'){var pk='poll-'+np;if(!votedPolls[pk]){document.getElementById('s-poll-area').style.display='block';document.getElementById('s-poll-done').style.display='none';}}activePoll=np;if(POLLS[activePoll]){var st='\u201C'+POLLS[activePoll]+'\u201D';var ds=document.getElementById('d-poll-scenario'),ss=document.getElementById('s-poll-scenario');if(ds)ds.textContent=st;if(ss)ss.textContent=POLLS[activePoll];}showAct(na);}
+
+function renderWelcome(items){var c=document.getElementById('d-welcome-responses');if(!c)return;c.innerHTML='';items.forEach(function(item,i){var d=document.createElement('div');d.className='response-card'+(i>=lastWelcomeCount?' glow-enter':'');d.style.animationDelay=(i*0.05)+'s';d.innerHTML='<div class="card-text">'+escapeHtml(item.text)+'</div>'+(item.name?'<div class="card-meta">\u2014 '+escapeHtml(item.name)+'</div>':'');c.appendChild(d);});if(items.length>lastWelcomeCount&&currentMode==='display')for(var j=lastWelcomeCount;j<items.length;j++)if(items[j].name)showToast(items[j].name);lastWelcomeCount=items.length;document.getElementById('d-student-count').textContent=items.length;var tr=document.getElementById('t-responses');if(tr&&currentAct==='welcome')tr.textContent=items.length;c.scrollTop=c.scrollHeight;}
+function renderTruths(items){var c=document.getElementById('d-truths-grid');if(!c)return;var prev=c.childElementCount;c.innerHTML='';feedTruthItems=items;items.forEach(function(item,i){var d=document.createElement('div');d.className='response-card'+(i>=prev?' glow-enter':'');d.style.animationDelay=(i*0.05)+'s';var reactions=reactionData[item.id]||{};if(IS_DEMO)reactions=(demoStore.reactions[item.id]||{});var badgeHtml='';var hasReactions=false;['🙏','💡','❤️'].forEach(function(em){var cnt=reactions[em]||0;if(cnt>0){hasReactions=true;badgeHtml+='<span class="card-react-badge">'+em+'<span>'+cnt+'</span></span>';}});d.innerHTML='<div class="card-text">'+escapeHtml(item.text)+'</div>'+(item.name?'<div class="card-meta">\u2014 '+escapeHtml(item.name)+'</div>':'')+(hasReactions?'<div class="card-reactions">'+badgeHtml+'</div>':'');c.appendChild(d);});var rc=document.getElementById('d-response-counter');if(rc)rc.textContent=items.length;if(currentAct==='act1'){var tr=document.getElementById('t-responses');if(tr)tr.textContent=items.length;}renderStudentFeed('seminary-truths');}
+function renderPoll(pi,d){if(pi!==activePoll)return;var t=d.trust||0,s=d.struggle||0,tot=t+s;document.getElementById('d-poll-trust-count').textContent=t;document.getElementById('d-poll-struggle-count').textContent=s;document.getElementById('d-poll-trust-bar').style.width=(tot>0?t/tot*100:0)+'%';document.getElementById('d-poll-struggle-bar').style.width=(tot>0?s/tot*100:0)+'%';var rc=document.getElementById('d-response-counter');if(rc)rc.textContent=tot;if(currentAct==='act2'){var tr=document.getElementById('t-responses');if(tr)tr.textContent=tot;}}
+function renderArms(items){var c=document.getElementById('d-arms-grid');if(!c)return;var prev=c.childElementCount;c.innerHTML='';feedArmsItems=items;items.forEach(function(item,i){var d=document.createElement('div');d.className='arms-card'+(i>=prev?' reverent-enter':'');d.style.animationDelay=(i*0.08)+'s';var reactions=reactionData[item.id]||{};if(IS_DEMO)reactions=(demoStore.reactions[item.id]||{});var badgeHtml='';var hasReactions=false;['🙏','❤️'].forEach(function(em){var cnt=reactions[em]||0;if(cnt>0){hasReactions=true;badgeHtml+='<span class="card-react-badge">'+em+'<span>'+cnt+'</span></span>';}});d.innerHTML='<div class="arms-name">'+escapeHtml(item.name)+'</div>'+(item.action?'<div class="arms-action">\u201C'+escapeHtml(item.action)+'\u201D</div>':'')+(hasReactions?'<div class="card-reactions" style="justify-content:center;">'+badgeHtml+'</div>':'');c.appendChild(d);});var rc=document.getElementById('d-response-counter');if(rc)rc.textContent=items.length;if(currentAct==='act3'){var tr=document.getElementById('t-responses');if(tr)tr.textContent=items.length;}renderStudentFeed('seminary-arms');}
+
+// === CONTENT FILTER ===
+var BLOCKED_WORDS=['fuck','shit','damn','hell','ass','bitch','dick','cock','pussy','crap','bastard','cunt','whore','slut','penis','vagina','boob','tit','sexy','porn','nude','naked','kill','murder','suicide','retard','fag','nigger','nigga','stfu','wtf','lmao','lmfao','omfg'];
+function containsBadWords(text){var lower=text.toLowerCase().replace(/[^a-z\s]/g,'');for(var i=0;i<BLOCKED_WORDS.length;i++){var re=new RegExp('\\b'+BLOCKED_WORDS[i]+'\\b');if(re.test(lower))return true;}return false;}
+function showFilterWarning(parentId){var parent=document.getElementById(parentId);if(!parent)return;var existing=parent.querySelector('.filter-warning');if(existing)existing.remove();var w=document.createElement('div');w.className='filter-warning';w.textContent='Please keep your response appropriate for class.';parent.appendChild(w);setTimeout(function(){w.remove();},4000);}
+
+// === REACTIONS ===
+var myReactions={};try{myReactions=JSON.parse(localStorage.getItem('sem-reactions')||'{}');}catch(e){}
+var reactionData={};
+if(!IS_DEMO){demoStore.reactions={};}else{demoStore.reactions={};}
+
+function reactTo(collection,docId,emoji){
+    var key=docId+'-'+emoji;
+    if(myReactions[key])return;
+    myReactions[key]=true;
+    try{localStorage.setItem('sem-reactions',JSON.stringify(myReactions));}catch(e){}
+    if(IS_DEMO){
+        if(!demoStore.reactions[docId])demoStore.reactions[docId]={};
+        demoStore.reactions[docId][emoji]=(demoStore.reactions[docId][emoji]||0)+1;
+        renderStudentFeed(collection);
+        if(collection==='seminary-truths')renderTruths(demoStore.truths);
+        if(collection==='seminary-arms')renderArms(demoStore.arms);
+    } else {
+        db.collection('seminary-reactions').doc(docId).set({[emoji]:firebase.firestore.FieldValue.increment(1)},{merge:true});
+    }
+    // Animate the button
+    var btn=document.querySelector('[data-react-key="'+key+'"]');
+    if(btn){btn.classList.add('reacted');btn.style.transform='scale(1.2)';setTimeout(function(){btn.style.transform='';},200);}
+}
+
+// === STUDENT FEED RENDERING ===
+var feedTruthItems=[],feedArmsItems=[];
+function renderStudentFeed(collection){
+    if(collection==='seminary-truths'){
+        var list=document.getElementById('s-act1-feed-list');if(!list)return;
+        list.innerHTML='';
+        feedTruthItems.forEach(function(item){
+            var card=document.createElement('div');card.className='feed-card';
+            var reactions=reactionData[item.id]||{};
+            if(IS_DEMO)reactions=demoStore.reactions[item.id]||{};
+            var reactHtml='<div class="feed-reactions">';
+            ['🙏','💡','❤️'].forEach(function(em){
+                var cnt=reactions[em]||0;
+                var rkey=item.id+'-'+em;
+                var reacted=myReactions[rkey]?'reacted':'';
+                reactHtml+='<button class="react-btn '+reacted+'" data-react-key="'+rkey+'" onclick="reactTo(\'seminary-truths\',\''+item.id+'\',\''+em+'\')">'+em+'<span class="react-count">'+(cnt>0?cnt:'')+'</span></button>';
+            });
+            reactHtml+='</div>';
+            card.innerHTML='<div class="feed-text">'+escapeHtml(item.text)+'</div>'+(item.name?'<div class="feed-author">\u2014 '+escapeHtml(item.name)+'</div>':'')+reactHtml;
+            list.appendChild(card);
+        });
+    }
+    if(collection==='seminary-arms'){
+        var list2=document.getElementById('s-act3-feed-list');if(!list2)return;
+        list2.innerHTML='';
+        feedArmsItems.forEach(function(item){
+            var card=document.createElement('div');card.className='feed-card';
+            var reactions=reactionData[item.id]||{};
+            if(IS_DEMO)reactions=demoStore.reactions[item.id]||{};
+            var reactHtml='<div class="feed-reactions">';
+            ['🙏','❤️'].forEach(function(em){
+                var cnt=reactions[em]||0;
+                var rkey=item.id+'-'+em;
+                var reacted=myReactions[rkey]?'reacted':'';
+                reactHtml+='<button class="react-btn '+reacted+'" data-react-key="'+rkey+'" onclick="reactTo(\'seminary-arms\',\''+item.id+'\',\''+em+'\')">'+em+'<span class="react-count">'+(cnt>0?cnt:'')+'</span></button>';
+            });
+            reactHtml+='</div>';
+            card.innerHTML='<div class="feed-text"><strong>'+escapeHtml(item.name)+'</strong>'+(item.action?' \u2014 '+escapeHtml(item.action):'')+'</div>'+reactHtml;
+            list2.appendChild(card);
+        });
+    }
+}
+
+// === SUBMIT HANDLERS (with content filter) ===
+document.getElementById('s-name-submit').addEventListener('click',function(){var n=document.getElementById('s-name-input').value.trim();if(!n)return;if(containsBadWords(n)){showFilterWarning('s-name-form');return;}studentName=n;try{localStorage.setItem('sem-name',n);}catch(e){}document.getElementById('s-name-form').style.display='none';document.getElementById('s-welcome-form').style.display='block';});
+document.getElementById('s-welcome-submit').addEventListener('click',function(){var t=document.getElementById('s-welcome-input').value.trim();if(!t)return;if(containsBadWords(t)){showFilterWarning('s-welcome-form');return;}if(IS_DEMO){demoStore.welcome.push({text:t,name:studentName});renderWelcome(demoStore.welcome);}else db.collection('seminary-welcome').add({text:t,name:studentName,ts:firebase.firestore.FieldValue.serverTimestamp()});document.getElementById('s-welcome-form').style.display='none';document.getElementById('s-welcome-done').style.display='block';});
+document.getElementById('s-act1-submit').addEventListener('click',function(){var t=document.getElementById('s-act1-input').value.trim();if(!t)return;if(containsBadWords(t)){showFilterWarning('s-act1-form');return;}if(IS_DEMO){var id='demo-truth-'+Date.now();demoStore.truths.push({text:t,name:studentName,id:id});renderTruths(demoStore.truths);}else db.collection('seminary-truths').add({text:t,name:studentName,ts:firebase.firestore.FieldValue.serverTimestamp()});document.getElementById('s-act1-form').style.display='none';document.getElementById('s-act1-done').style.display='block';});
+document.getElementById('s-act1-another').addEventListener('click',function(){document.getElementById('s-act1-input').value='';document.getElementById('s-act1-form').style.display='block';document.getElementById('s-act1-done').style.display='none';});
+window.votePoll=function(ch){var pk='poll-'+activePoll;if(votedPolls[pk])return;if(IS_DEMO){demoStore.polls[pk][ch]++;renderPoll(activePoll,demoStore.polls[pk]);}else db.collection('seminary-polls').doc(pk).set({[ch]:firebase.firestore.FieldValue.increment(1)},{merge:true});votedPolls[pk]=ch;try{localStorage.setItem('sem-voted',JSON.stringify(votedPolls));}catch(e){}document.getElementById('s-poll-area').style.display='none';document.getElementById('s-poll-done').style.display='block';};
+document.getElementById('s-act3-submit').addEventListener('click',function(){var n=document.getElementById('s-act3-name').value.trim(),a=document.getElementById('s-act3-action').value.trim();if(!n)return;if(containsBadWords(n+' '+a)){showFilterWarning('s-act3-form');return;}if(IS_DEMO){var id='demo-arm-'+Date.now();demoStore.arms.push({name:n,action:a,id:id});renderArms(demoStore.arms);}else db.collection('seminary-arms').add({name:n,action:a||'',submittedBy:studentName,ts:firebase.firestore.FieldValue.serverTimestamp()});document.getElementById('s-act3-form').style.display='none';document.getElementById('s-act3-done').style.display='block';});
+document.getElementById('s-reflect-submit').addEventListener('click',function(){var t=document.getElementById('s-reflect-input').value.trim();if(!t)return;if(!IS_DEMO)db.collection('seminary-reflections').add({text:t,name:studentName,ts:firebase.firestore.FieldValue.serverTimestamp()});document.getElementById('s-reflect-input').style.display='none';document.getElementById('s-reflect-submit').style.display='none';document.getElementById('s-reflect-done').style.display='block';});
+function loadCloseTruths(){var c=document.getElementById('d-close-truths');if(!c)return;if(IS_DEMO){c.innerHTML='';demoStore.truths.forEach(function(i){var d=document.createElement('div');d.className='response-card';d.innerHTML='<div class="card-text">'+escapeHtml(i.text)+'</div>';c.appendChild(d);});}else db.collection('seminary-truths').orderBy('ts','asc').get().then(function(s){c.innerHTML='';s.forEach(function(doc){var d=document.createElement('div');d.className='response-card';d.innerHTML='<div class="card-text">'+escapeHtml(doc.data().text)+'</div>';c.appendChild(d);});});}
+if(!IS_DEMO){db.collection('seminary-state').doc('config').onSnapshot(function(doc){if(!doc.exists){db.collection('seminary-state').doc('config').set({currentAct:'welcome',activePoll:0});return;}processStateUpdate(doc.data());});db.collection('seminary-welcome').orderBy('ts','asc').onSnapshot(function(s){var i=[];s.forEach(function(d){i.push(d.data());});renderWelcome(i);});db.collection('seminary-truths').orderBy('ts','asc').onSnapshot(function(s){var i=[];s.forEach(function(d){var item=d.data();item.id=d.id;i.push(item);});renderTruths(i);});for(var pi=0;pi<POLLS.length;pi++)(function(idx){db.collection('seminary-polls').doc('poll-'+idx).onSnapshot(function(doc){var d=doc.exists?doc.data():{trust:0,struggle:0};renderPoll(idx,d);});})(pi);db.collection('seminary-arms').orderBy('ts','asc').onSnapshot(function(s){var i=[];s.forEach(function(d){var item=d.data();item.id=d.id;i.push(item);});renderArms(i);});db.collection('seminary-reactions').onSnapshot(function(s){reactionData={};s.forEach(function(d){reactionData[d.id]=d.data();});renderTruths(feedTruthItems);renderArms(feedArmsItems);});}else processStateUpdate(demoStore.state);
+async function resetSession(){if(!confirm('Delete ALL data?'))return;if(!confirm('Really sure?'))return;if(IS_DEMO){demoStore.welcome=[];demoStore.truths=[];demoStore.polls={'poll-0':{trust:0,struggle:0},'poll-1':{trust:0,struggle:0},'poll-2':{trust:0,struggle:0}};demoStore.arms=[];demoStore.reactions={};demoStore.state={currentAct:'welcome',activePoll:0};lastWelcomeCount=0;feedTruthItems=[];feedArmsItems=[];renderWelcome([]);renderTruths([]);renderArms([]);processStateUpdate(demoStore.state);}else{var cols=['seminary-welcome','seminary-truths','seminary-polls','seminary-arms','seminary-reflections','seminary-reactions'];for(var ci=0;ci<cols.length;ci++){var sn=await db.collection(cols[ci]).get();var b=db.batch();sn.forEach(function(d){b.delete(d.ref);});await b.commit();}await db.collection('seminary-state').doc('config').set({currentAct:'welcome',activePoll:0});}votedPolls={};myReactions={};reactionData={};try{localStorage.removeItem('sem-voted');localStorage.removeItem('sem-reactions');}catch(e){}alert('Session reset.');}
+function escapeHtml(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+var mode=detectMode();activateMode(mode);
+window.addEventListener('hashchange',function(){var m=detectMode();activateMode(m);showAct(currentAct);});
+</script>
+</body>
+</html>
