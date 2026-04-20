@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Wildcat Legacy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Monoton&family=Big+Shoulders+Display:wght@400;600;800;900&family=Fraunces:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--navy-deep:#0B1220;--navy:#14213D;--navy-light:#1E2A4A;--coral:#E63946;--coral-bright:#FF4D5E;--amber:#F4A261;--gold:#FFB627;--cream:#FFF5E1;--muted:#94A3B8;--success:#22C55E;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--navy-deep);color:var(--cream);font-family:'Fraunces',serif;-webkit-font-smoothing:antialiased;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,0.012) 0px,rgba(255,255,255,0.012) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;mix-blend-mode:overlay;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--amber);border-radius:2px;}
+.mode{display:none;height:100%;width:100%;overflow:hidden;flex-direction:column;}
+.mode.active{display:flex;}
+.phase{display:none;flex-direction:column;flex:1;overflow:hidden;animation:fadeUp .6s ease;}
+.phase.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes popIn{0%{transform:scale(0);}60%{transform:scale(1.2);}100%{transform:scale(1);}}
+
+/* === DISPLAY === */
+#display{background:radial-gradient(ellipse at 50% 30%,#151d30 0%,var(--navy-deep) 70%);}
+.d-header{text-align:center;padding:24px 40px 12px;flex-shrink:0;}
+.d-header .phase-tag{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:6px;}
+.d-header h1{font-family:'Big Shoulders Display',sans-serif;font-size:clamp(28px,5vw,56px);font-weight:900;color:var(--cream);text-transform:uppercase;letter-spacing:4px;}
+.d-body{flex:1;overflow-y:auto;padding:0 40px 30px;}
+
+/* Welcome */
+.welcome-layout{display:flex;height:100%;align-items:center;justify-content:center;gap:60px;}
+.welcome-left{text-align:center;}
+.welcome-left .title{font-family:'Monoton',sans-serif;font-size:clamp(36px,8vw,80px);color:var(--coral);text-shadow:0 0 60px rgba(230,57,70,0.3);line-height:.95;}
+.welcome-left .sub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,1.5vw,15px);letter-spacing:5px;color:var(--amber);margin-top:12px;text-transform:uppercase;}
+.welcome-left .scan{font-size:15px;color:var(--muted);margin-top:28px;}
+.qr-wrap{background:#fff;padding:14px;border-radius:10px;display:inline-block;margin-top:12px;}
+.qr-wrap img{display:block;width:200px;height:200px;}
+.welcome-right{width:350px;max-height:70vh;overflow-y:auto;}
+.join-count{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:3px;color:var(--amber);text-align:center;margin-bottom:14px;}
+.join-count span{font-size:24px;font-weight:700;color:var(--coral);}
+.join-card{background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.15);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:14px;color:var(--cream);animation:fadeUp .5s ease;}
+
+/* Unity Board */
+.unity-board{display:flex;flex-direction:column;align-items:center;padding:20px 0;}
+.ub-timer{font-family:'JetBrains Mono',monospace;font-size:clamp(32px,6vw,72px);font-weight:700;color:var(--coral);text-shadow:0 0 30px rgba(230,57,70,.3);margin-bottom:30px;letter-spacing:4px;}
+.ub-timer.warning{animation:timerPulse 1s infinite;}
+@keyframes timerPulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+.ub-letters{display:flex;gap:clamp(12px,3vw,28px);justify-content:center;margin-bottom:36px;}
+.ub-slot{width:clamp(60px,10vw,100px);height:clamp(72px,12vw,120px);border:2px solid rgba(230,57,70,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Big Shoulders Display',sans-serif;font-size:clamp(36px,7vw,72px);font-weight:900;color:var(--navy-deep);background:rgba(230,57,70,.05);transition:all .6s;}
+.ub-slot.found{background:linear-gradient(135deg,var(--coral),var(--coral-bright));border-color:var(--coral);color:var(--cream);box-shadow:0 0 30px rgba(230,57,70,.4);animation:popIn .5s ease;}
+.ub-teams{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;width:100%;max-width:900px;}
+.ub-team{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;text-align:center;transition:border-color .3s,box-shadow .3s;}
+.ub-team.done{border-color:var(--success);box-shadow:0 0 12px rgba(34,197,94,.2);}
+.ub-team .team-emoji{font-size:28px;margin-bottom:4px;}
+.ub-team .team-name{font-family:'Big Shoulders Display',sans-serif;font-size:14px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--cream);}
+.ub-team .team-status{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1px;}
+.ub-team .team-members{font-size:11px;color:var(--muted);margin-top:6px;}
+
+/* Converge */
+.converge-symbols{display:flex;gap:20px;justify-content:center;margin:30px 0;flex-wrap:wrap;}
+.conv-symbol{width:80px;height:80px;border:2px solid rgba(230,57,70,.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;background:rgba(230,57,70,.05);}
+
+/* Finale */
+.finale-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;}
+
+/* === STUDENT === */
+#student{background:var(--navy-deep);}
+.s-header{text-align:center;padding:18px 20px 14px;border-bottom:1px solid rgba(230,57,70,.12);flex-shrink:0;}
+.s-header .chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--coral);background:rgba(230,57,70,.08);padding:4px 14px;border-radius:20px;border:1px solid rgba(230,57,70,.15);margin-bottom:6px;}
+.s-header h2{font-family:'Big Shoulders Display',sans-serif;font-size:24px;font-weight:900;color:var(--cream);text-transform:uppercase;letter-spacing:3px;}
+.s-header .ref{font-size:13px;font-style:italic;color:var(--muted);margin-top:2px;}
+.s-body{flex:1;overflow-y:auto;padding:20px;}
+.prompt{font-size:16px;color:var(--cream);margin-bottom:12px;line-height:1.5;}
+.input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(230,57,70,.15);border-radius:10px;padding:14px 16px;font-family:'Fraunces',serif;font-size:16px;color:var(--cream);outline:none;transition:border-color .3s;-webkit-appearance:none;}
+.input:focus{border-color:var(--coral);}
+.input::placeholder{color:rgba(148,163,184,.4);}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-family:'Big Shoulders Display',sans-serif;font-size:16px;font-weight:800;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s;margin-top:14px;}
+.btn-coral{background:linear-gradient(135deg,var(--coral),var(--coral-bright));color:var(--cream);}
+.btn-coral:hover{box-shadow:0 4px 20px rgba(230,57,70,.3);transform:translateY(-1px);}
+.btn-outline{background:transparent;border:1px solid rgba(230,57,70,.2);color:var(--muted);}
+.btn-outline:hover{border-color:var(--coral);color:var(--coral);}
+.check-row{display:flex;align-items:center;gap:10px;margin-top:12px;}
+.check-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--coral);}
+.check-row label{font-size:14px;color:var(--muted);}
+.confirm{text-align:center;padding:24px;color:var(--coral);font-size:16px;animation:fadeUp .5s;}
+.confirm .big{font-size:40px;display:block;margin-bottom:8px;animation:popIn .5s;}
+.assign-reveal{text-align:center;padding:30px 20px;animation:fadeUp .8s;}
+.assign-reveal .emoji{font-size:64px;animation:popIn .6s;margin-bottom:12px;}
+.assign-reveal .clique{font-family:'Big Shoulders Display',sans-serif;font-size:36px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:4px;}
+.assign-reveal .station{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:3px;color:var(--amber);margin-top:8px;text-transform:uppercase;}
+.assign-reveal .mission{font-size:15px;color:var(--muted);margin-top:16px;line-height:1.6;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;}
+.waiting{text-align:center;padding:50px 20px;color:var(--muted);}
+.waiting .icon{font-size:40px;display:block;margin-bottom:12px;}
+
+/* Code word display */
+.code-word-display{text-align:center;padding:24px;margin:16px 0;background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.2);border-radius:12px;}
+.code-word-display .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+.code-word-display .word{font-family:'Big Shoulders Display',sans-serif;font-size:32px;font-weight:900;color:var(--coral);letter-spacing:4px;text-transform:uppercase;}
+.code-word-display .instruction{font-size:13px;color:var(--amber);margin-top:8px;}
+
+/* Hall Pass delivery notification */
+.hall-pass-notif{text-align:center;padding:16px;margin:12px 0;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;animation:fadeUp .5s;}
+.hall-pass-notif .hpn-title{font-family:'Big Shoulders Display',sans-serif;font-size:18px;font-weight:800;color:var(--success);letter-spacing:2px;text-transform:uppercase;}
+.hall-pass-notif .hpn-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+
+/* === TEACHER === */
+#teacher{background:var(--navy-deep);}
+.t-header{text-align:center;padding:16px;border-bottom:1px solid rgba(230,57,70,.12);flex-shrink:0;}
+.t-header h2{font-family:'Big Shoulders Display',sans-serif;font-size:20px;font-weight:900;color:var(--coral);letter-spacing:4px;text-transform:uppercase;}
+.t-body{flex:1;overflow-y:auto;padding:16px;}
+.t-current{text-align:center;padding:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;margin-bottom:16px;}
+.t-current .curr-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+.t-current .curr-name{font-family:'Big Shoulders Display',sans-serif;font-size:24px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:3px;}
+.t-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
+.t-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px;text-align:center;}
+.t-stat .num{font-family:'Big Shoulders Display',sans-serif;font-size:28px;font-weight:900;color:var(--coral);}
+.t-stat .lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+.t-nav{display:flex;gap:10px;margin-bottom:16px;}
+.t-nav .btn{flex:1;margin-top:0;font-size:14px;}
+.t-phases{margin-bottom:16px;}
+.t-phase-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:4px;cursor:pointer;transition:background .2s;}
+.t-phase-item:hover{background:rgba(255,255,255,.03);}
+.t-phase-item.current{background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.12);}
+.t-phase-item .dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.t-phase-item.current .dot{background:var(--coral);box-shadow:0 0 8px rgba(230,57,70,.4);}
+.t-phase-item.completed .dot{background:var(--success);}
+.t-phase-item .pi-name{font-size:14px;font-weight:600;color:var(--cream);}
+.t-phase-item.current .pi-name{color:var(--coral);}
+.t-phase-item .pi-desc{font-size:11px;color:var(--muted);}
+.t-section{margin-bottom:16px;padding:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;}
+.t-section-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:8px;}
+.t-team-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;}
+.t-team-row:last-child{border-bottom:none;}
+.t-team-row .ttr-name{color:var(--cream);}
+.t-team-row .ttr-status{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
+.t-team-row .ttr-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--coral);font-weight:700;}
+.btn-danger{background:transparent;border:1px solid #c0392b;color:#c0392b;font-size:12px;}
+.btn-danger:hover{background:rgba(192,57,43,.1);}
+.btn-success{background:linear-gradient(135deg,#22C55E,#16A34A);color:var(--cream);}
+.t-timer-config{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.t-timer-config input{width:60px;text-align:center;}
+.t-timer-config span{font-size:12px;color:var(--muted);}
+
+@media(max-width:768px){
+    .welcome-layout{flex-direction:column;gap:24px;padding:16px;}
+    .welcome-right{width:100%;max-height:35vh;}
+    .qr-wrap img{width:150px;height:150px;}
+    .ub-teams{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+
+<!-- DISPLAY MODE -->
+<div id="display" class="mode">
+    <div id="d-lobby" class="phase">
+        <div class="welcome-layout">
+            <div class="welcome-left">
+                <div class="title">Wildcat<br>Legacy</div>
+                <div class="sub">Escape Room \u00B7 2026</div>
+                <div class="scan">Scan to join</div>
+                <div class="qr-wrap"><img id="qr-code" src="" alt="QR"></div>
+            </div>
+            <div class="welcome-right">
+                <div class="join-count">WILDCATS: <span id="d-player-count">0</span></div>
+                <div id="d-join-list"></div>
+            </div>
+        </div>
+    </div>
+    <div id="d-video" class="phase">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">Transmission Playing</div>
+            <div style="font-family:'Big Shoulders Display',sans-serif;font-size:clamp(28px,5vw,52px);font-weight:900;text-transform:uppercase;letter-spacing:4px;">Watch the Screen</div>
+            <div style="color:var(--muted);font-size:16px;margin-top:16px;">Open the cinematic HTML on this laptop in another tab</div>
+        </div>
+    </div>
+    <div id="d-assign" class="phase">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">Clique Assignment</div>
+            <div style="font-family:'Big Shoulders Display',sans-serif;font-size:clamp(28px,5vw,52px);font-weight:900;text-transform:uppercase;letter-spacing:4px;">Check Your Phone!</div>
+            <div style="color:var(--muted);font-size:16px;margin-top:16px;">Find your team and head to your station</div>
+        </div>
+    </div>
+    <div id="d-puzzles" class="phase">
+        <div class="d-header">
+            <div class="phase-tag">Unity Board</div>
+        </div>
+        <div class="d-body">
+            <div class="unity-board">
+                <div class="ub-timer" id="d-timer">28:00</div>
+                <div class="ub-letters" id="d-letter-slots"></div>
+                <div class="ub-teams" id="d-team-cards"></div>
+            </div>
+        </div>
+    </div>
+    <div id="d-converge" class="phase">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">All Letters Found</div>
+            <div style="font-family:'Big Shoulders Display',sans-serif;font-size:clamp(24px,4vw,44px);font-weight:900;text-transform:uppercase;letter-spacing:4px;margin-bottom:24px;">Decode the Word Together</div>
+            <div class="converge-symbols" id="d-symbols"></div>
+            <div style="color:var(--muted);font-size:16px;margin-top:20px;">Every team holds one piece. Find each other.</div>
+        </div>
+    </div>
+    <div id="d-finale" class="phase">
+        <div class="finale-screen" id="d-finale-content">
+            <div style="font-family:'Big Shoulders Display',sans-serif;font-size:clamp(48px,10vw,120px);font-weight:900;text-transform:uppercase;letter-spacing:8px;color:var(--coral);text-shadow:0 0 60px rgba(230,57,70,.4);" id="d-finale-word">UNITY</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:5px;color:var(--amber);margin-top:16px;text-transform:uppercase;">The locker is open</div>
+        </div>
+    </div>
+    <div id="d-legacy" class="phase">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;">
+            <div style="font-size:48px;margin-bottom:16px;">🐾</div>
+            <div style="font-family:'Monoton',sans-serif;font-size:clamp(28px,5vw,52px);color:var(--coral);text-shadow:0 0 40px rgba(230,57,70,.3);">Welcome to<br>the Legacy</div>
+            <div style="color:var(--muted);font-size:16px;margin-top:20px;font-style:italic;">Choose your scripture. Claim your tag.</div>
+        </div>
+    </div>
+</div>
+
+<!-- STUDENT MODE -->
+<div id="student" class="mode">
+    <div id="s-lobby" class="phase">
+        <div class="s-header"><div class="chip">Join</div><h2>Wildcat Legacy</h2></div>
+        <div class="s-body">
+            <div id="s-login-form">
+                <div class="prompt">What's your first name, Wildcat?</div>
+                <input type="text" class="input" id="s-name" placeholder="Your first name" autocomplete="off">
+                <div class="check-row"><input type="checkbox" id="s-partner-check"><label for="s-partner-check">I'm sharing this phone with a partner</label></div>
+                <div id="s-partner-field" style="display:none;margin-top:12px;">
+                    <input type="text" class="input" id="s-partner-name" placeholder="Partner's first name" autocomplete="off">
+                </div>
+                <button class="btn btn-coral" id="s-join-btn">Enter the Class</button>
+            </div>
+            <div id="s-login-done" style="display:none;">
+                <div class="confirm"><span class="big">🐾</span>You're in!<br><span style="font-size:13px;color:var(--muted);">Watch the screen up front.</span></div>
+            </div>
+        </div>
+    </div>
+    <div id="s-video" class="phase">
+        <div class="s-header"><div class="chip">Transmission</div><h2>Watch the Screen</h2></div>
+        <div class="s-body"><div class="waiting"><span class="icon">📺</span>A transmission is playing up front.<br><span style="font-size:13px;color:var(--muted);">Your mission begins soon.</span></div></div>
+    </div>
+    <div id="s-assign" class="phase">
+        <div class="s-header"><div class="chip">Your Team</div><h2>Clique Assignment</h2></div>
+        <div class="s-body"><div class="assign-reveal" id="s-assign-content"></div></div>
+    </div>
+    <div id="s-puzzles" class="phase">
+        <div class="s-header"><div class="chip" id="s-puzzle-chip">Active</div><h2 id="s-puzzle-title">Your Station</h2><div class="ref" id="s-puzzle-ref"></div></div>
+        <div class="s-body" id="s-puzzle-body">
+            <div id="s-puzzle-layer1">
+                <div class="prompt" id="s-l1-prompt">Solve Layer 1 at your station, then enter the answer here.</div>
+                <input type="text" class="input" id="s-l1-input" placeholder="Enter your answer..." autocomplete="off">
+                <button class="btn btn-coral" id="s-l1-submit">Submit Answer</button>
+                <div id="s-l1-wrong" style="display:none;color:var(--coral);text-align:center;margin-top:8px;font-size:14px;">Not quite — look again.</div>
+            </div>
+            <div id="s-puzzle-codeword" style="display:none;">
+                <div class="code-word-display">
+                    <div class="label">Your Hall Pass Code Word</div>
+                    <div class="word" id="s-codeword-text"></div>
+                    <div class="instruction">Say this to your station helper to get the Hall Pass envelope. Then deliver it!</div>
+                </div>
+                <button class="btn btn-outline" id="s-delivered-btn">We Delivered the Hall Pass</button>
+            </div>
+            <div id="s-puzzle-layer2" style="display:none;">
+                <div id="s-hp-received" class="hall-pass-notif" style="display:none;">
+                    <div class="hpn-title">Hall Pass Received!</div>
+                    <div class="hpn-sub">Use its contents to solve Layer 2.</div>
+                </div>
+                <div class="prompt" id="s-l2-prompt">Use the Hall Pass you received to solve Layer 2, then enter the answer.</div>
+                <input type="text" class="input" id="s-l2-input" placeholder="Enter your answer..." autocomplete="off">
+                <button class="btn btn-coral" id="s-l2-submit">Submit Answer</button>
+                <div id="s-l2-wrong" style="display:none;color:var(--coral);text-align:center;margin-top:8px;font-size:14px;">Not quite — look again.</div>
+            </div>
+            <div id="s-puzzle-done" style="display:none;">
+                <div class="confirm"><span class="big">⭐</span>Letter found!<br><span style="font-size:13px;color:var(--muted);">Watch the Unity Board!</span></div>
+            </div>
+        </div>
+    </div>
+    <div id="s-converge" class="phase">
+        <div class="s-header"><div class="chip">Final Challenge</div><h2>Decode the Word</h2></div>
+        <div class="s-body">
+            <div style="text-align:center;padding:20px;">
+                <div style="font-size:48px;margin-bottom:12px;" id="s-my-symbol"></div>
+                <div style="font-family:'Big Shoulders Display',sans-serif;font-size:28px;font-weight:900;color:var(--coral);letter-spacing:3px;" id="s-my-letter"></div>
+                <div style="color:var(--muted);font-size:14px;margin-top:12px;">Your symbol = your letter. Find the other teams and decode the word together!</div>
+            </div>
+        </div>
+    </div>
+    <div id="s-finale" class="phase">
+        <div class="s-body"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;">
+            <div style="font-size:48px;margin-bottom:16px;">🎉</div>
+            <div style="font-family:'Big Shoulders Display',sans-serif;font-size:36px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:4px;">UNITY!</div>
+            <div style="color:var(--muted);font-size:16px;margin-top:16px;font-style:italic;">The locker is open.</div>
+        </div></div>
+    </div>
+    <div id="s-legacy" class="phase">
+        <div class="s-header"><div class="chip">Your Legacy</div><h2>Choose Your Scripture</h2></div>
+        <div class="s-body"><div style="text-align:center;padding:20px;">
+            <div style="font-size:36px;margin-bottom:12px;">📖</div>
+            <div style="color:var(--cream);font-size:16px;line-height:1.6;">Come forward and choose the scripture card that speaks to you. Write your name on it. Slide it into your luggage tag.</div>
+            <div style="color:var(--muted);font-size:14px;margin-top:16px;font-style:italic;">This is yours — your legacy.</div>
+        </div></div>
+    </div>
+</div>
+
+<!-- TEACHER MODE -->
+<div id="teacher" class="mode">
+    <div class="t-header"><h2>Gamemaster</h2></div>
+    <div class="t-body">
+        <div class="t-current"><div class="curr-label">Current Phase</div><div class="curr-name" id="t-phase-name">Lobby</div></div>
+        <div class="t-stats">
+            <div class="t-stat"><div class="num" id="t-players">0</div><div class="lbl">Players</div></div>
+            <div class="t-stat"><div class="num" id="t-letters">0</div><div class="lbl">Letters</div></div>
+            <div class="t-stat"><div class="num" id="t-timer-display">28:00</div><div class="lbl">Timer</div></div>
+        </div>
+        <div class="t-nav">
+            <button class="btn btn-outline" onclick="prevPhase()">← Back</button>
+            <button class="btn btn-coral" onclick="nextPhase()" style="margin-top:0;">Next →</button>
+        </div>
+
+        <div class="t-section" id="t-timer-section" style="display:none;">
+            <div class="t-section-title">Timer Control</div>
+            <div class="t-timer-config">
+                <input type="number" class="input" id="t-timer-min" value="28" min="1" max="60" style="width:60px;text-align:center;padding:8px;">
+                <span>minutes</span>
+                <button class="btn btn-coral" onclick="startTimer()" style="margin-top:0;width:auto;padding:10px 20px;">Start</button>
+                <button class="btn btn-outline" onclick="stopTimer()" style="margin-top:0;width:auto;padding:10px 20px;">Stop</button>
+            </div>
+        </div>
+
+        <div class="t-section" id="t-teams-section" style="display:none;">
+            <div class="t-section-title">Teams + Code Words</div>
+            <div id="t-team-list"></div>
+        </div>
+
+        <div class="t-section" id="t-finale-section" style="display:none;">
+            <div class="t-section-title">Finale Control</div>
+            <button class="btn btn-coral" onclick="triggerFinale()" style="font-size:18px;padding:18px;">🎉 WHAT TEAM? WILDCATS!</button>
+        </div>
+
+        <div class="t-phases" id="t-phase-list"></div>
+
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);">
+            <button class="btn btn-danger" onclick="resetAll()">Reset All Data</button>
+        </div>
+    </div>
+</div>
+
+<script>
+var IS_DEMO=typeof firebase==='undefined';
+var db=null;
+if(!IS_DEMO){
+    firebase.initializeApp({apiKey:"AIzaSyAa-V12j-ASGLqpcDU4MN-20uTzsxMh6sk",authDomain:"church-lessons-24392.firebaseapp.com",projectId:"church-lessons-24392",storageBucket:"church-lessons-24392.firebasestorage.app",messagingSenderId:"122319599653",appId:"1:122319599653:web:7719cd478da5d40b59a7cc"});
+    db=firebase.firestore();
+}
+
+var PHASES=['lobby','video','assign','puzzles','converge','finale','legacy'];
+var PHASE_META={lobby:{name:'Lobby',desc:'Girls joining'},video:{name:'Video',desc:'Cinematic transmission'},assign:{name:'Assign',desc:'Clique reveal'},puzzles:{name:'Puzzles',desc:'Escape room active'},converge:{name:'Converge',desc:'Decode the word'},finale:{name:'Finale',desc:'What team? Wildcats!'},legacy:{name:'Legacy',desc:'Scripture + luggage tag'}};
+var CLIQUES=[
+    {name:'Jocks',emoji:'🏀',station:'The Locker Room',letter:'U',mission:'Your strength lifts others. Lead with action.',passTo:1},
+    {name:'Brainiacs',emoji:'🧪',station:'The Lab',letter:'N',mission:'Your mind sees what others miss. Light the way.',passTo:2},
+    {name:'Drama',emoji:'🎭',station:'The Stage',letter:'I',mission:'Your voice gives words to what others feel. Speak truth.',passTo:3},
+    {name:'Skaters',emoji:'🎨',station:'The Mural',letter:'T',mission:'Your creativity builds what didn\u2019t exist before. Create.',passTo:4},
+    {name:'Sharpay',emoji:'⭐',station:'The Audition',letter:'Y',mission:'Your sparkle draws people together. Shine.',passTo:0},
+];
+var SYMBOLS=['🏀','🧪','🎭','🎨','⭐'];
+var CODE_POOL=['BREAK FREE','HEAD IN','START NEW','BOP TOP','GO WILDCATS','SUMMER TIME','BET ON IT','SCREAM OUT','RIGHT NOW','FABULOUS','WORK IT','NOW NEVER','EVERYDAY','WHAT TIME','ALL STAR'];
+var L1_ANSWERS={0:'11221',1:'11212',2:'OPENWIDE',3:'DC3827',4:null};
+var L2_ANSWERS={0:null,1:null,2:null,3:null,4:'MATT514'};
+
+var currentMode='student',currentPhase='lobby',myTeamIndex=-1,myName='',timerInterval=null;
+try{myName=localStorage.getItem('wl-name')||'';myTeamIndex=parseInt(localStorage.getItem('wl-team'))||(-1);}catch(e){}
+
+function detectMode(){var h=window.location.hash.replace('#','');return h==='display'?'display':h==='teacher'?'teacher':'student';}
+function activateMode(m){currentMode=m;document.querySelectorAll('.mode').forEach(function(e){e.classList.remove('active');});document.getElementById(m).classList.add('active');if(m==='display')generateQR();}
+function generateQR(){var u=window.location.href.split('#')[0];var i=document.getElementById('qr-code');if(i){i.src='https://api.qrserver.com/v1/create-qr-code/?size=250x250&data='+encodeURIComponent(u)+'&format=svg';i.onerror=function(){i.parentElement.innerHTML='<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#333;font-size:12px;">QR loads when deployed</div>';};}}
+
+function showPhase(p){
+    currentPhase=p;
+    var prefix=currentMode==='display'?'d':currentMode==='teacher'?'t':'s';
+    var container=document.getElementById(currentMode);
+    container.querySelectorAll('.phase').forEach(function(e){e.classList.remove('active');});
+    var target=document.getElementById(prefix+'-'+p);
+    if(target)target.classList.add('active');
+    if(currentMode==='teacher')updateTeacherUI();
+    if(currentMode==='display'&&p==='puzzles')renderUnityBoard();
+    if(currentMode==='student'&&p==='assign')renderAssignment();
+    if(currentMode==='student'&&p==='puzzles')renderPuzzleUI();
+    if(currentMode==='student'&&p==='converge')renderConverge();
+    if(currentMode==='display'&&p==='converge')renderConvergeDisplay();
+    var ts=document.getElementById('t-timer-section');if(ts)ts.style.display=p==='puzzles'?'block':'none';
+    var tt=document.getElementById('t-teams-section');if(tt)tt.style.display=(p==='puzzles'||p==='converge')?'block':'none';
+    var tf=document.getElementById('t-finale-section');if(tf)tf.style.display=p==='converge'?'block':'none';
+}
+
+function setPhase(p){
+    if(IS_DEMO){processState({currentPhase:p});return;}
+    db.collection('wildcat-state').doc('config').set({currentPhase:p},{merge:true});
+}
+function nextPhase(){var i=PHASES.indexOf(currentPhase);if(i<PHASES.length-1){var next=PHASES[i+1];if(next==='assign')assignTeams();setPhase(next);}}
+function prevPhase(){var i=PHASES.indexOf(currentPhase);if(i>0)setPhase(PHASES[i-1]);}
+function jumpToPhase(p){if(p==='assign')assignTeams();setPhase(p);}
+function processState(data){currentPhase=data.currentPhase||'lobby';showPhase(currentPhase);}
+
+function generateCodeWords(){
+    var pool=CODE_POOL.slice();var words=[];
+    for(var i=0;i<5;i++){var idx=Math.floor(Math.random()*pool.length);words.push(pool.splice(idx,1)[0]);}
+    return words;
+}
+
+function assignTeams(){
+    if(IS_DEMO)return;
+    db.collection('wildcat-players').get().then(function(snap){
+        var players=[];snap.forEach(function(doc){players.push({id:doc.id,data:doc.data()});});
+        players.sort(function(){return Math.random()-.5;});
+        var codeWords=generateCodeWords();
+        var batch=db.batch();
+        players.forEach(function(p,i){
+            var teamIdx=i%5;
+            batch.update(db.collection('wildcat-players').doc(p.id),{teamIndex:teamIdx});
+        });
+        for(var t=0;t<5;t++){
+            batch.set(db.collection('wildcat-teams').doc('team-'+t),{
+                cliqueIndex:t,codeWord:codeWords[t],
+                layer1Done:false,layer2Done:false,letterFound:false,
+                hallPassDelivered:false,hallPassReceived:false
+            },{merge:true});
+        }
+        batch.commit();
+    });
+}
+
+/* === TEACHER UI === */
+function updateTeacherUI(){
+    var m=PHASE_META[currentPhase];
+    document.getElementById('t-phase-name').textContent=m.name;
+    var list=document.getElementById('t-phase-list');
+    list.innerHTML=PHASES.map(function(p){
+        var pm=PHASE_META[p];var isCurr=p===currentPhase;var isDone=PHASES.indexOf(p)<PHASES.indexOf(currentPhase);
+        return '<div class="t-phase-item '+(isCurr?'current':'')+' '+(isDone?'completed':'')+'" onclick="jumpToPhase(\''+p+'\')"><div class="dot"></div><div><div class="pi-name">'+pm.name+'</div><div class="pi-desc">'+pm.desc+'</div></div></div>';
+    }).join('');
+}
+
+/* === TIMER === */
+function startTimer(){
+    var min=parseInt(document.getElementById('t-timer-min').value)||28;
+    var end=Date.now()+min*60*1000;
+    if(!IS_DEMO)db.collection('wildcat-state').doc('config').set({timerEnd:end},{merge:true});
+    runTimer(end);
+}
+function stopTimer(){
+    if(timerInterval)clearInterval(timerInterval);
+    if(!IS_DEMO)db.collection('wildcat-state').doc('config').set({timerEnd:null},{merge:true});
+}
+function runTimer(end){
+    if(timerInterval)clearInterval(timerInterval);
+    timerInterval=setInterval(function(){
+        var left=Math.max(0,end-Date.now());
+        var m=Math.floor(left/60000);var s=Math.floor((left%60000)/1000);
+        var str=m+':'+(s<10?'0':'')+s;
+        var el=document.getElementById('d-timer');if(el){el.textContent=str;el.classList.toggle('warning',left<120000&&left>0);}
+        var te=document.getElementById('t-timer-display');if(te)te.textContent=str;
+        if(left<=0)clearInterval(timerInterval);
+    },500);
+}
+
+/* === UNITY BOARD === */
+function renderUnityBoard(){
+    var slots=document.getElementById('d-letter-slots');
+    if(!slots)return;
+    slots.innerHTML=CLIQUES.map(function(c,i){return '<div class="ub-slot" id="d-slot-'+i+'">'+c.letter+'</div>';}).join('');
+}
+function renderTeamCards(teams){
+    var container=document.getElementById('d-team-cards');
+    if(!container)return;
+    container.innerHTML='';
+    CLIQUES.forEach(function(c,i){
+        var t=teams[i]||{};
+        var status=t.letterFound?'LETTER FOUND':t.layer2Done?'Layer 2 done':t.layer1Done?'Layer 1 done':'Working...';
+        var d=document.createElement('div');
+        d.className='ub-team'+(t.letterFound?' done':'');
+        d.innerHTML='<div class="team-emoji">'+c.emoji+'</div><div class="team-name">'+c.name+'</div><div class="team-status">'+status+'</div>';
+        container.appendChild(d);
+    });
+    CLIQUES.forEach(function(c,i){
+        var slot=document.getElementById('d-slot-'+i);
+        if(slot&&teams[i]&&teams[i].letterFound)slot.classList.add('found');
+    });
+    var found=0;CLIQUES.forEach(function(c,i){if(teams[i]&&teams[i].letterFound)found++;});
+    var tl=document.getElementById('t-letters');if(tl)tl.textContent=found;
+}
+function renderTeacherTeams(teams){
+    var container=document.getElementById('t-team-list');
+    if(!container)return;
+    container.innerHTML='';
+    CLIQUES.forEach(function(c,i){
+        var t=teams[i]||{};
+        var d=document.createElement('div');d.className='t-team-row';
+        d.innerHTML='<span class="ttr-name">'+c.emoji+' '+c.name+'</span><span class="ttr-code">'+(t.codeWord||'—')+'</span><span class="ttr-status">'+(t.letterFound?'✅':t.layer1Done?'L1 ✓':'...')+'</span>';
+        container.appendChild(d);
+    });
+}
+
+/* === STUDENT: ASSIGNMENT === */
+function renderAssignment(){
+    if(myTeamIndex<0)return;
+    var c=CLIQUES[myTeamIndex];
+    var el=document.getElementById('s-assign-content');
+    if(el)el.innerHTML='<div class="emoji">'+c.emoji+'</div><div class="clique">'+c.name+'</div><div class="station">→ Station: '+c.station+'</div><div class="mission">'+c.mission+'</div>';
+}
+
+/* === STUDENT: PUZZLE UI === */
+function renderPuzzleUI(){
+    if(myTeamIndex<0)return;
+    var c=CLIQUES[myTeamIndex];
+    document.getElementById('s-puzzle-chip').textContent=c.emoji+' '+c.name;
+    document.getElementById('s-puzzle-title').textContent=c.station;
+}
+
+/* === STUDENT: CONVERGE === */
+function renderConverge(){
+    if(myTeamIndex<0)return;
+    document.getElementById('s-my-symbol').textContent=SYMBOLS[myTeamIndex];
+    document.getElementById('s-my-letter').textContent='Your letter: '+CLIQUES[myTeamIndex].letter;
+}
+function renderConvergeDisplay(){
+    var el=document.getElementById('d-symbols');
+    if(!el)return;
+    var shuffled=SYMBOLS.slice().sort(function(){return Math.random()-.5;});
+    el.innerHTML=shuffled.map(function(s){return '<div class="conv-symbol">'+s+'</div>';}).join('');
+}
+
+/* === FINALE === */
+function triggerFinale(){setPhase('finale');}
+
+/* === STUDENT SUBMIT HANDLERS === */
+document.getElementById('s-partner-check').addEventListener('change',function(){
+    document.getElementById('s-partner-field').style.display=this.checked?'block':'none';
+});
+
+document.getElementById('s-join-btn').addEventListener('click',function(){
+    var name=document.getElementById('s-name').value.trim();
+    if(!name)return;
+    var partner=document.getElementById('s-partner-check').checked?document.getElementById('s-partner-name').value.trim():'';
+    myName=name;
+    try{localStorage.setItem('wl-name',name);}catch(e){}
+    if(!IS_DEMO){
+        db.collection('wildcat-players').add({name:name,partnerName:partner||null,teamIndex:-1,ts:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    document.getElementById('s-login-form').style.display='none';
+    document.getElementById('s-login-done').style.display='block';
+});
+
+document.getElementById('s-l1-submit').addEventListener('click',function(){
+    if(myTeamIndex<0)return;
+    var input=document.getElementById('s-l1-input');
+    var answer=input.value.trim().toUpperCase().replace(/\s+/g,'');
+    var correct=L1_ANSWERS[myTeamIndex];
+    if(!correct){document.getElementById('s-puzzle-layer1').style.display='none';document.getElementById('s-puzzle-codeword').style.display='block';if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer1Done:true},{merge:true});return;}
+    if(answer===correct){
+        document.getElementById('s-puzzle-layer1').style.display='none';
+        document.getElementById('s-puzzle-codeword').style.display='block';
+        if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer1Done:true},{merge:true});
+    } else {
+        document.getElementById('s-l1-wrong').style.display='block';
+        setTimeout(function(){document.getElementById('s-l1-wrong').style.display='none';},3000);
+    }
+});
+
+document.getElementById('s-delivered-btn').addEventListener('click',function(){
+    if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({hallPassDelivered:true},{merge:true});
+    document.getElementById('s-puzzle-codeword').style.display='none';
+    document.getElementById('s-puzzle-layer2').style.display='block';
+});
+
+document.getElementById('s-l2-submit').addEventListener('click',function(){
+    if(myTeamIndex<0)return;
+    var input=document.getElementById('s-l2-input');
+    var answer=input.value.trim().toUpperCase().replace(/\s+/g,'');
+    var correct=L2_ANSWERS[myTeamIndex];
+    if(!correct){document.getElementById('s-puzzle-layer2').style.display='none';document.getElementById('s-puzzle-done').style.display='block';if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer2Done:true,letterFound:true},{merge:true});return;}
+    if(answer===correct){
+        document.getElementById('s-puzzle-layer2').style.display='none';
+        document.getElementById('s-puzzle-done').style.display='block';
+        if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer2Done:true,letterFound:true},{merge:true});
+    } else {
+        document.getElementById('s-l2-wrong').style.display='block';
+        setTimeout(function(){document.getElementById('s-l2-wrong').style.display='none';},3000);
+    }
+});
+
+/* === FIREBASE LISTENERS === */
+if(!IS_DEMO){
+    db.collection('wildcat-state').doc('config').onSnapshot(function(doc){
+        if(!doc.exists){db.collection('wildcat-state').doc('config').set({currentPhase:'lobby'});return;}
+        var data=doc.data();
+        processState(data);
+        if(data.timerEnd)runTimer(data.timerEnd);
+    });
+    db.collection('wildcat-players').orderBy('ts','asc').onSnapshot(function(snap){
+        var count=0;var joinList=document.getElementById('d-join-list');
+        if(joinList)joinList.innerHTML='';
+        snap.forEach(function(doc){
+            count++;
+            var d=doc.data();
+            if(joinList){var card=document.createElement('div');card.className='join-card';card.textContent=d.name+(d.partnerName?' & '+d.partnerName:'');joinList.appendChild(card);}
+            if(d.name===myName&&d.teamIndex>=0){myTeamIndex=d.teamIndex;try{localStorage.setItem('wl-team',myTeamIndex);}catch(e){}}
+        });
+        var pc=document.getElementById('d-player-count');if(pc)pc.textContent=count;
+        var tp=document.getElementById('t-players');if(tp)tp.textContent=count;
+    });
+    db.collection('wildcat-teams').onSnapshot(function(snap){
+        var teams={};
+        snap.forEach(function(doc){
+            var idx=parseInt(doc.id.replace('team-',''));
+            teams[idx]=doc.data();
+        });
+        renderTeamCards(teams);
+        renderTeacherTeams(teams);
+        if(myTeamIndex>=0&&teams[myTeamIndex]){
+            var myTeam=teams[myTeamIndex];
+            var cw=document.getElementById('s-codeword-text');
+            if(cw)cw.textContent=myTeam.codeWord||'';
+            var destIdx=CLIQUES[myTeamIndex].passTo;
+            if(teams[destIdx]&&teams[destIdx].hallPassDelivered){
+                var hp=document.getElementById('s-hp-received');
+                if(hp)hp.style.display='block';
+            }
+        }
+    });
+} else {
+    processState({currentPhase:'lobby'});
+}
+
+/* === RESET === */
+async function resetAll(){
+    if(!confirm('Delete ALL data?'))return;
+    if(!confirm('Really sure?'))return;
+    if(!IS_DEMO){
+        var cols=['wildcat-state','wildcat-players','wildcat-teams'];
+        for(var i=0;i<cols.length;i++){var s=await db.collection(cols[i]).get();var b=db.batch();s.forEach(function(d){b.delete(d.ref);});await b.commit();}
+        await db.collection('wildcat-state').doc('config').set({currentPhase:'lobby'});
+    }
+    myTeamIndex=-1;myName='';
+    try{localStorage.removeItem('wl-name');localStorage.removeItem('wl-team');}catch(e){}
+    alert('Reset complete.');
+}
+
+function escapeHtml(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+
+var mode=detectMode();activateMode(mode);
+window.addEventListener('hashchange',function(){activateMode(detectMode());showPhase(currentPhase);});
+</script>
+</body>
+</html>
