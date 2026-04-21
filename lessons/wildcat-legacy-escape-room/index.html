@@ -9,10 +9,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
-:root{--navy-deep:#0B1220;--navy:#14213D;--navy-light:#1E2A4A;--coral:#E63946;--coral-bright:#FF4D5E;--amber:#F4A261;--gold:#FFB627;--cream:#FFF5E1;--muted:#94A3B8;--success:#22C55E;}
+:root{--navy-deep:#0B1220;--navy:#14213D;--navy-light:#1E2A4A;--coral:#E63946;--coral-bright:#FF4D5E;--amber:#F4A261;--gold:#FFB627;--teal:#0EA5E9;--cream:#FFF5E1;--paper:#F7F1E3;--muted:#94A3B8;--success:#22C55E;
+--font-display:'Monoton',sans-serif;--font-varsity:'Big Shoulders Display',sans-serif;--font-serif:'Fraunces',serif;--font-mono:'JetBrains Mono',monospace;}
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;overflow:hidden;background:var(--navy-deep);color:var(--cream);font-family:'Fraunces',serif;-webkit-font-smoothing:antialiased;}
-body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,0.012) 0px,rgba(255,255,255,0.012) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;mix-blend-mode:overlay;}
+html,body{height:100%;overflow:hidden;background:var(--navy-deep);color:var(--cream);font-family:var(--font-serif);-webkit-font-smoothing:antialiased;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,0.015) 0px,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;mix-blend-mode:overlay;}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");pointer-events:none;z-index:9998;opacity:0.04;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--amber);border-radius:2px;}
 .mode{display:none;height:100%;width:100%;overflow:hidden;flex-direction:column;}
 .mode.active{display:flex;}
@@ -20,102 +22,119 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .phase.active{display:flex;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 @keyframes popIn{0%{transform:scale(0);}60%{transform:scale(1.2);}100%{transform:scale(1);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(230,57,70,0.5);}100%{box-shadow:0 0 0 16px rgba(230,57,70,0);}}
 
 /* === DISPLAY === */
 #display{background:radial-gradient(ellipse at 50% 30%,#151d30 0%,var(--navy-deep) 70%);}
 .d-header{text-align:center;padding:24px 40px 12px;flex-shrink:0;}
-.d-header .phase-tag{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:6px;}
-.d-header h1{font-family:'Big Shoulders Display',sans-serif;font-size:clamp(28px,5vw,56px);font-weight:900;color:var(--cream);text-transform:uppercase;letter-spacing:4px;}
+.d-header .phase-tag{font-family:var(--font-mono);font-size:12px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:6px;}
+.d-header .phase-tag::before{content:'● ';color:var(--coral);animation:pulse 2s infinite;}
+.d-header h1{font-family:var(--font-varsity);font-size:clamp(28px,5vw,56px);font-weight:900;color:var(--cream);text-transform:uppercase;letter-spacing:4px;}
 .d-body{flex:1;overflow-y:auto;padding:0 40px 30px;}
 
 /* Welcome */
 .welcome-layout{display:flex;height:100%;align-items:center;justify-content:center;gap:60px;}
 .welcome-left{text-align:center;}
-.welcome-left .title{font-family:'Monoton',sans-serif;font-size:clamp(36px,8vw,80px);color:var(--coral);text-shadow:0 0 60px rgba(230,57,70,0.3);line-height:.95;}
-.welcome-left .sub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,1.5vw,15px);letter-spacing:5px;color:var(--amber);margin-top:12px;text-transform:uppercase;}
+.welcome-left .title{font-family:var(--font-display);font-size:clamp(36px,8vw,80px);color:var(--coral);text-shadow:0 0 60px rgba(230,57,70,0.3),4px 4px 0 var(--navy-deep);line-height:.95;}
+.welcome-left .sub{font-family:var(--font-mono);font-size:clamp(11px,1.5vw,15px);letter-spacing:5px;color:var(--amber);margin-top:12px;text-transform:uppercase;}
 .welcome-left .scan{font-size:15px;color:var(--muted);margin-top:28px;}
 .qr-wrap{background:#fff;padding:14px;border-radius:10px;display:inline-block;margin-top:12px;}
 .qr-wrap img{display:block;width:200px;height:200px;}
 .welcome-right{width:350px;max-height:70vh;overflow-y:auto;}
-.join-count{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:3px;color:var(--amber);text-align:center;margin-bottom:14px;}
+.join-count{font-family:var(--font-mono);font-size:13px;letter-spacing:3px;color:var(--amber);text-align:center;margin-bottom:14px;}
 .join-count span{font-size:24px;font-weight:700;color:var(--coral);}
-.join-card{background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.15);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:14px;color:var(--cream);animation:fadeUp .5s ease;}
+.join-card{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.5));border:1px solid rgba(230,57,70,.12);border-radius:8px;padding:10px 14px;margin-bottom:6px;font-size:14px;color:var(--cream);animation:fadeUp .5s ease;}
 
 /* Unity Board */
 .unity-board{display:flex;flex-direction:column;align-items:center;padding:20px 0;}
-.ub-timer{font-family:'JetBrains Mono',monospace;font-size:clamp(32px,6vw,72px);font-weight:700;color:var(--coral);text-shadow:0 0 30px rgba(230,57,70,.3);margin-bottom:30px;letter-spacing:4px;}
+.ub-timer{font-family:var(--font-mono);font-size:clamp(32px,6vw,72px);font-weight:700;color:var(--coral);text-shadow:0 0 30px rgba(230,57,70,.3);margin-bottom:30px;letter-spacing:4px;}
 .ub-timer.warning{animation:timerPulse 1s infinite;}
 @keyframes timerPulse{0%,100%{opacity:1;}50%{opacity:.5;}}
 .ub-letters{display:flex;gap:clamp(12px,3vw,28px);justify-content:center;margin-bottom:36px;}
-.ub-slot{width:clamp(60px,10vw,100px);height:clamp(72px,12vw,120px);border:2px solid rgba(230,57,70,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Big Shoulders Display',sans-serif;font-size:clamp(36px,7vw,72px);font-weight:900;color:var(--navy-deep);background:rgba(230,57,70,.05);transition:all .6s;}
+.ub-slot{width:clamp(60px,10vw,100px);height:clamp(72px,12vw,120px);border:2px solid rgba(230,57,70,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--font-varsity);font-size:clamp(36px,7vw,72px);font-weight:900;color:rgba(230,57,70,.15);background:rgba(230,57,70,.03);transition:all .6s;}
 .ub-slot.found{background:linear-gradient(135deg,var(--coral),var(--coral-bright));border-color:var(--coral);color:var(--cream);box-shadow:0 0 30px rgba(230,57,70,.4);animation:popIn .5s ease;}
 .ub-teams{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;width:100%;max-width:900px;}
-.ub-team{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;text-align:center;transition:border-color .3s,box-shadow .3s;}
+.ub-team{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;text-align:center;transition:border-color .3s,box-shadow .3s;}
 .ub-team.done{border-color:var(--success);box-shadow:0 0 12px rgba(34,197,94,.2);}
 .ub-team .team-emoji{font-size:28px;margin-bottom:4px;}
-.ub-team .team-name{font-family:'Big Shoulders Display',sans-serif;font-size:14px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--cream);}
-.ub-team .team-status{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1px;}
-.ub-team .team-members{font-size:11px;color:var(--muted);margin-top:6px;}
+.ub-team .team-name{font-family:var(--font-varsity);font-size:14px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--cream);}
+.ub-team .team-status{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1px;}
 
 /* Converge */
 .converge-symbols{display:flex;gap:20px;justify-content:center;margin:30px 0;flex-wrap:wrap;}
 .conv-symbol{width:80px;height:80px;border:2px solid rgba(230,57,70,.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;background:rgba(230,57,70,.05);}
 
-/* Finale */
-.finale-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;}
-
 /* === STUDENT === */
-#student{background:var(--navy-deep);}
-.s-header{text-align:center;padding:18px 20px 14px;border-bottom:1px solid rgba(230,57,70,.12);flex-shrink:0;}
-.s-header .chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--coral);background:rgba(230,57,70,.08);padding:4px 14px;border-radius:20px;border:1px solid rgba(230,57,70,.15);margin-bottom:6px;}
-.s-header h2{font-family:'Big Shoulders Display',sans-serif;font-size:24px;font-weight:900;color:var(--cream);text-transform:uppercase;letter-spacing:3px;}
+#student{background:radial-gradient(ellipse at top,rgba(14,165,233,0.04),transparent 60%),var(--navy-deep);}
+.s-header{text-align:center;padding:18px 20px 14px;border-bottom:1px solid rgba(244,162,97,.1);flex-shrink:0;}
+.s-header .chip{display:inline-block;font-family:var(--font-mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);background:rgba(244,162,97,.08);padding:4px 14px;border-radius:20px;border:1px solid rgba(244,162,97,.15);margin-bottom:6px;}
+.s-header h2{font-family:var(--font-varsity);font-size:24px;font-weight:900;color:var(--cream);text-transform:uppercase;letter-spacing:3px;}
 .s-header .ref{font-size:13px;font-style:italic;color:var(--muted);margin-top:2px;}
 .s-body{flex:1;overflow-y:auto;padding:20px;}
-.prompt{font-size:16px;color:var(--cream);margin-bottom:12px;line-height:1.5;}
-.input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(230,57,70,.15);border-radius:10px;padding:14px 16px;font-family:'Fraunces',serif;font-size:16px;color:var(--cream);outline:none;transition:border-color .3s;-webkit-appearance:none;}
-.input:focus{border-color:var(--coral);}
-.input::placeholder{color:rgba(148,163,184,.4);}
-.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-family:'Big Shoulders Display',sans-serif;font-size:16px;font-weight:800;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s;margin-top:14px;}
-.btn-coral{background:linear-gradient(135deg,var(--coral),var(--coral-bright));color:var(--cream);}
-.btn-coral:hover{box-shadow:0 4px 20px rgba(230,57,70,.3);transform:translateY(-1px);}
-.btn-outline{background:transparent;border:1px solid rgba(230,57,70,.2);color:var(--muted);}
-.btn-outline:hover{border-color:var(--coral);color:var(--coral);}
-.check-row{display:flex;align-items:center;gap:10px;margin-top:12px;}
+
+/* Puzzle card system */
+.puzzle-card{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.5));border:1px solid rgba(244,162,97,0.15);border-radius:12px;padding:16px;margin-bottom:12px;}
+.puzzle-label{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:6px;}
+.puzzle-title{font-family:var(--font-varsity);font-weight:900;font-size:18px;color:var(--cream);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.puzzle-desc{font-size:14px;line-height:1.7;color:rgba(255,245,225,.75);margin-bottom:12px;}
+.puzzle-scripture{font-family:var(--font-mono);font-size:12px;color:var(--gold);background:rgba(0,0,0,0.25);padding:12px 14px;border-radius:8px;letter-spacing:0.5px;line-height:1.8;margin-bottom:12px;border-left:3px solid rgba(255,182,39,.3);}
+.puzzle-scripture .verse-ref{display:block;color:var(--muted);font-size:10px;margin-top:8px;letter-spacing:2px;}
+.puzzle-hint{font-size:13px;color:var(--teal);font-style:italic;padding:10px 14px;background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.12);border-radius:8px;margin-bottom:12px;}
+
+.prompt{font-size:15px;color:var(--cream);margin-bottom:12px;line-height:1.6;}
+.input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(244,162,97,.2);border-radius:10px;padding:14px 16px;font-family:var(--font-varsity);font-size:18px;color:var(--cream);outline:none;transition:border-color .3s,box-shadow .3s;-webkit-appearance:none;letter-spacing:2px;text-align:center;text-transform:uppercase;}
+.input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(244,162,97,.1);}
+.input::placeholder{color:rgba(148,163,184,.3);text-transform:none;font-family:var(--font-serif);font-size:14px;letter-spacing:0;}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-family:var(--font-varsity);font-size:16px;font-weight:800;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s;margin-top:14px;}
+.btn-coral{background:linear-gradient(135deg,var(--coral),var(--coral-bright));color:var(--cream);box-shadow:0 4px 16px rgba(230,57,70,.2);}
+.btn-coral:hover{box-shadow:0 6px 24px rgba(230,57,70,.35);transform:translateY(-1px);}
+.btn-coral:active{transform:translateY(0);}
+.btn-outline{background:transparent;border:1px solid rgba(244,162,97,.2);color:var(--muted);}
+.btn-outline:hover{border-color:var(--amber);color:var(--amber);}
+.check-row{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px;background:rgba(255,255,255,.02);border-radius:8px;}
 .check-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--coral);}
 .check-row label{font-size:14px;color:var(--muted);}
-.confirm{text-align:center;padding:24px;color:var(--coral);font-size:16px;animation:fadeUp .5s;}
-.confirm .big{font-size:40px;display:block;margin-bottom:8px;animation:popIn .5s;}
+.confirm{text-align:center;padding:30px 20px;color:var(--cream);font-size:16px;animation:fadeUp .5s;}
+.confirm .big{font-size:48px;display:block;margin-bottom:10px;animation:popIn .5s;}
+.confirm .sub{font-size:13px;color:var(--muted);margin-top:4px;}
+.wrong-msg{color:var(--coral);text-align:center;margin-top:10px;font-size:13px;font-family:var(--font-mono);letter-spacing:1px;animation:fadeUp .3s;}
 .assign-reveal{text-align:center;padding:30px 20px;animation:fadeUp .8s;}
-.assign-reveal .emoji{font-size:64px;animation:popIn .6s;margin-bottom:12px;}
-.assign-reveal .clique{font-family:'Big Shoulders Display',sans-serif;font-size:36px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:4px;}
-.assign-reveal .station{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:3px;color:var(--amber);margin-top:8px;text-transform:uppercase;}
-.assign-reveal .mission{font-size:15px;color:var(--muted);margin-top:16px;line-height:1.6;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;}
+.assign-reveal .emoji{font-size:72px;animation:popIn .6s;margin-bottom:14px;}
+.assign-reveal .clique{font-family:var(--font-varsity);font-size:40px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:5px;}
+.assign-reveal .station{font-family:var(--font-mono);font-size:11px;letter-spacing:4px;color:var(--amber);margin-top:10px;text-transform:uppercase;}
+.assign-reveal .mission{font-size:15px;color:rgba(255,245,225,.6);margin-top:18px;line-height:1.7;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;}
 .waiting{text-align:center;padding:50px 20px;color:var(--muted);}
 .waiting .icon{font-size:40px;display:block;margin-bottom:12px;}
 
 /* Code word display */
-.code-word-display{text-align:center;padding:24px;margin:16px 0;background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.2);border-radius:12px;}
-.code-word-display .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
-.code-word-display .word{font-family:'Big Shoulders Display',sans-serif;font-size:32px;font-weight:900;color:var(--coral);letter-spacing:4px;text-transform:uppercase;}
-.code-word-display .instruction{font-size:13px;color:var(--amber);margin-top:8px;}
+.code-word-display{text-align:center;padding:24px;margin:16px 0;background:linear-gradient(145deg,rgba(230,57,70,.06),rgba(230,57,70,.02));border:1px solid rgba(230,57,70,.2);border-radius:12px;}
+.code-word-display .label{font-family:var(--font-mono);font-size:10px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+.code-word-display .word{font-family:var(--font-varsity);font-size:36px;font-weight:900;color:var(--coral);letter-spacing:6px;text-transform:uppercase;text-shadow:0 0 20px rgba(230,57,70,.3);}
+.code-word-display .instruction{font-size:13px;color:var(--amber);margin-top:10px;line-height:1.5;}
 
-/* Hall Pass delivery notification */
-.hall-pass-notif{text-align:center;padding:16px;margin:12px 0;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;animation:fadeUp .5s;}
-.hall-pass-notif .hpn-title{font-family:'Big Shoulders Display',sans-serif;font-size:18px;font-weight:800;color:var(--success);letter-spacing:2px;text-transform:uppercase;}
+/* Hall Pass */
+.hall-pass-notif{text-align:center;padding:16px;margin:12px 0;background:linear-gradient(145deg,rgba(34,197,94,.06),rgba(34,197,94,.02));border:1px solid rgba(34,197,94,.2);border-radius:10px;animation:fadeUp .5s;}
+.hall-pass-notif .hpn-title{font-family:var(--font-varsity);font-size:18px;font-weight:800;color:var(--success);letter-spacing:2px;text-transform:uppercase;}
 .hall-pass-notif .hpn-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+
+/* Layer status badge */
+.layer-badge{display:inline-block;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;border-radius:12px;margin-bottom:10px;}
+.layer-badge.l1{color:var(--amber);background:rgba(244,162,97,.1);border:1px solid rgba(244,162,97,.2);}
+.layer-badge.l2{color:var(--teal);background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);}
 
 /* === TEACHER === */
 #teacher{background:var(--navy-deep);}
-.t-header{text-align:center;padding:16px;border-bottom:1px solid rgba(230,57,70,.12);flex-shrink:0;}
-.t-header h2{font-family:'Big Shoulders Display',sans-serif;font-size:20px;font-weight:900;color:var(--coral);letter-spacing:4px;text-transform:uppercase;}
+.t-header{text-align:center;padding:16px;border-bottom:1px solid rgba(244,162,97,.1);flex-shrink:0;}
+.t-header h2{font-family:var(--font-varsity);font-size:20px;font-weight:900;color:var(--coral);letter-spacing:4px;text-transform:uppercase;}
 .t-body{flex:1;overflow-y:auto;padding:16px;}
-.t-current{text-align:center;padding:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;margin-bottom:16px;}
-.t-current .curr-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
-.t-current .curr-name{font-family:'Big Shoulders Display',sans-serif;font-size:24px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:3px;}
+.t-current{text-align:center;padding:20px;background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:16px;}
+.t-current .curr-label{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+.t-current .curr-name{font-family:var(--font-varsity);font-size:24px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:3px;}
 .t-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
-.t-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px;text-align:center;}
-.t-stat .num{font-family:'Big Shoulders Display',sans-serif;font-size:28px;font-weight:900;color:var(--coral);}
-.t-stat .lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+.t-stat{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;text-align:center;}
+.t-stat .num{font-family:var(--font-varsity);font-size:28px;font-weight:900;color:var(--coral);}
+.t-stat .lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:2px;}
 .t-nav{display:flex;gap:10px;margin-bottom:16px;}
 .t-nav .btn{flex:1;margin-top:0;font-size:14px;}
 .t-phases{margin-bottom:16px;}
@@ -128,17 +147,17 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .t-phase-item .pi-name{font-size:14px;font-weight:600;color:var(--cream);}
 .t-phase-item.current .pi-name{color:var(--coral);}
 .t-phase-item .pi-desc{font-size:11px;color:var(--muted);}
-.t-section{margin-bottom:16px;padding:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;}
-.t-section-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:8px;}
-.t-team-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;}
+.t-section{margin-bottom:16px;padding:14px;background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:10px;}
+.t-section-title{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:8px;}
+.t-team-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;}
 .t-team-row:last-child{border-bottom:none;}
 .t-team-row .ttr-name{color:var(--cream);}
-.t-team-row .ttr-status{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
-.t-team-row .ttr-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--coral);font-weight:700;}
+.t-team-row .ttr-status{font-family:var(--font-mono);font-size:10px;color:var(--muted);}
+.t-team-row .ttr-code{font-family:var(--font-mono);font-size:11px;color:var(--coral);font-weight:700;letter-spacing:1px;}
 .btn-danger{background:transparent;border:1px solid #c0392b;color:#c0392b;font-size:12px;}
 .btn-danger:hover{background:rgba(192,57,43,.1);}
 .btn-success{background:linear-gradient(135deg,#22C55E,#16A34A);color:var(--cream);}
-.t-timer-config{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.t-timer-config{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
 .t-timer-config input{width:60px;text-align:center;}
 .t-timer-config span{font-size:12px;color:var(--muted);}
 
@@ -152,13 +171,13 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 </head>
 <body>
 
-<!-- DISPLAY MODE -->
+<!-- ==================== DISPLAY MODE ==================== -->
 <div id="display" class="mode">
     <div id="d-lobby" class="phase">
         <div class="welcome-layout">
             <div class="welcome-left">
                 <div class="title">Wildcat<br>Legacy</div>
-                <div class="sub">Escape Room \u00B7 2026</div>
+                <div class="sub">Escape Room · 2026</div>
                 <div class="scan">Scan to join</div>
                 <div class="qr-wrap"><img id="qr-code" src="" alt="QR"></div>
             </div>
@@ -170,22 +189,20 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     </div>
     <div id="d-video" class="phase">
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">Transmission Playing</div>
-            <div style="font-family:'Big Shoulders Display',sans-serif;font-size:clamp(28px,5vw,52px);font-weight:900;text-transform:uppercase;letter-spacing:4px;">Watch the Screen</div>
-            <div style="color:var(--muted);font-size:16px;margin-top:16px;">Open the cinematic HTML on this laptop in another tab</div>
+            <div style="font-family:var(--font-mono);font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">📼 Transmission Playing</div>
+            <div style="font-family:var(--font-varsity);font-size:clamp(28px,5vw,52px);font-weight:900;text-transform:uppercase;letter-spacing:4px;">Watch the Screen</div>
+            <div style="color:var(--muted);font-size:15px;margin-top:16px;font-style:italic;">Open the cinematic HTML on this laptop in another tab</div>
         </div>
     </div>
     <div id="d-assign" class="phase">
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">Clique Assignment</div>
-            <div style="font-family:'Big Shoulders Display',sans-serif;font-size:clamp(28px,5vw,52px);font-weight:900;text-transform:uppercase;letter-spacing:4px;">Check Your Phone!</div>
-            <div style="color:var(--muted);font-size:16px;margin-top:16px;">Find your team and head to your station</div>
+            <div style="font-family:var(--font-mono);font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">Clique Assignment</div>
+            <div style="font-family:var(--font-varsity);font-size:clamp(28px,5vw,52px);font-weight:900;text-transform:uppercase;letter-spacing:4px;">Check Your Phone!</div>
+            <div style="color:var(--muted);font-size:15px;margin-top:16px;font-style:italic;">Find your team · Head to your station</div>
         </div>
     </div>
     <div id="d-puzzles" class="phase">
-        <div class="d-header">
-            <div class="phase-tag">Unity Board</div>
-        </div>
+        <div class="d-header"><div class="phase-tag">Unity Board</div></div>
         <div class="d-body">
             <div class="unity-board">
                 <div class="ub-timer" id="d-timer">28:00</div>
@@ -196,49 +213,49 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     </div>
     <div id="d-converge" class="phase">
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">All Letters Found</div>
-            <div style="font-family:'Big Shoulders Display',sans-serif;font-size:clamp(24px,4vw,44px);font-weight:900;text-transform:uppercase;letter-spacing:4px;margin-bottom:24px;">Decode the Word Together</div>
+            <div style="font-family:var(--font-mono);font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">All Letters Found</div>
+            <div style="font-family:var(--font-varsity);font-size:clamp(24px,4vw,44px);font-weight:900;text-transform:uppercase;letter-spacing:4px;margin-bottom:24px;">Decode the Word Together</div>
             <div class="converge-symbols" id="d-symbols"></div>
-            <div style="color:var(--muted);font-size:16px;margin-top:20px;">Every team holds one piece. Find each other.</div>
+            <div style="color:var(--muted);font-size:15px;margin-top:20px;font-style:italic;">Every team holds one piece. Find each other.</div>
         </div>
     </div>
     <div id="d-finale" class="phase">
-        <div class="finale-screen" id="d-finale-content">
-            <div style="font-family:'Big Shoulders Display',sans-serif;font-size:clamp(48px,10vw,120px);font-weight:900;text-transform:uppercase;letter-spacing:8px;color:var(--coral);text-shadow:0 0 60px rgba(230,57,70,.4);" id="d-finale-word">UNITY</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:5px;color:var(--amber);margin-top:16px;text-transform:uppercase;">The locker is open</div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;">
+            <div style="font-family:var(--font-varsity);font-size:clamp(48px,10vw,120px);font-weight:900;text-transform:uppercase;letter-spacing:8px;color:var(--coral);text-shadow:0 0 60px rgba(230,57,70,.4);">UNITY</div>
+            <div style="font-family:var(--font-mono);font-size:16px;letter-spacing:5px;color:var(--amber);margin-top:16px;text-transform:uppercase;">The locker is open</div>
         </div>
     </div>
     <div id="d-legacy" class="phase">
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;">
             <div style="font-size:48px;margin-bottom:16px;">🐾</div>
-            <div style="font-family:'Monoton',sans-serif;font-size:clamp(28px,5vw,52px);color:var(--coral);text-shadow:0 0 40px rgba(230,57,70,.3);">Welcome to<br>the Legacy</div>
-            <div style="color:var(--muted);font-size:16px;margin-top:20px;font-style:italic;">Choose your scripture. Claim your tag.</div>
+            <div style="font-family:var(--font-display);font-size:clamp(28px,5vw,52px);color:var(--coral);text-shadow:0 0 40px rgba(230,57,70,.3);">Welcome to<br>the Legacy</div>
+            <div style="color:var(--muted);font-size:15px;margin-top:20px;font-style:italic;">Choose your scripture · Claim your tag</div>
         </div>
     </div>
 </div>
 
-<!-- STUDENT MODE -->
+<!-- ==================== STUDENT MODE ==================== -->
 <div id="student" class="mode">
     <div id="s-lobby" class="phase">
         <div class="s-header"><div class="chip">Join</div><h2>Wildcat Legacy</h2></div>
         <div class="s-body">
             <div id="s-login-form">
                 <div class="prompt">What's your first name, Wildcat?</div>
-                <input type="text" class="input" id="s-name" placeholder="Your first name" autocomplete="off">
+                <input type="text" class="input" id="s-name" placeholder="Your first name" autocomplete="off" style="text-transform:none;text-align:left;font-family:var(--font-serif);letter-spacing:0;">
                 <div class="check-row"><input type="checkbox" id="s-partner-check"><label for="s-partner-check">I'm sharing this phone with a partner</label></div>
                 <div id="s-partner-field" style="display:none;margin-top:12px;">
-                    <input type="text" class="input" id="s-partner-name" placeholder="Partner's first name" autocomplete="off">
+                    <input type="text" class="input" id="s-partner-name" placeholder="Partner's first name" autocomplete="off" style="text-transform:none;text-align:left;font-family:var(--font-serif);letter-spacing:0;">
                 </div>
                 <button class="btn btn-coral" id="s-join-btn">Enter the Class</button>
             </div>
             <div id="s-login-done" style="display:none;">
-                <div class="confirm"><span class="big">🐾</span>You're in!<br><span style="font-size:13px;color:var(--muted);">Watch the screen up front.</span></div>
+                <div class="confirm"><span class="big">🐾</span>You're in!<div class="sub">Watch the screen up front.</div></div>
             </div>
         </div>
     </div>
     <div id="s-video" class="phase">
-        <div class="s-header"><div class="chip">Transmission</div><h2>Watch the Screen</h2></div>
-        <div class="s-body"><div class="waiting"><span class="icon">📺</span>A transmission is playing up front.<br><span style="font-size:13px;color:var(--muted);">Your mission begins soon.</span></div></div>
+        <div class="s-header"><div class="chip">📼 Transmission</div><h2>Watch the Screen</h2></div>
+        <div class="s-body"><div class="waiting"><span class="icon">📺</span>A transmission is playing up front.<div style="font-size:13px;color:var(--muted);margin-top:6px;">Your mission begins soon.</div></div></div>
     </div>
     <div id="s-assign" class="phase">
         <div class="s-header"><div class="chip">Your Team</div><h2>Clique Assignment</h2></div>
@@ -248,16 +265,16 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
         <div class="s-header"><div class="chip" id="s-puzzle-chip">Active</div><h2 id="s-puzzle-title">Your Station</h2><div class="ref" id="s-puzzle-ref"></div></div>
         <div class="s-body" id="s-puzzle-body">
             <div id="s-puzzle-layer1">
-                <div class="prompt" id="s-l1-prompt">Solve Layer 1 at your station, then enter the answer here.</div>
+                <div id="s-l1-content"></div>
                 <input type="text" class="input" id="s-l1-input" placeholder="Enter your answer..." autocomplete="off">
                 <button class="btn btn-coral" id="s-l1-submit">Submit Answer</button>
-                <div id="s-l1-wrong" style="display:none;color:var(--coral);text-align:center;margin-top:8px;font-size:14px;">Not quite — look again.</div>
+                <div id="s-l1-wrong" style="display:none;" class="wrong-msg">Not quite — look again.</div>
             </div>
             <div id="s-puzzle-codeword" style="display:none;">
                 <div class="code-word-display">
                     <div class="label">Your Hall Pass Code Word</div>
                     <div class="word" id="s-codeword-text"></div>
-                    <div class="instruction">Say this to your station helper to get the Hall Pass envelope. Then deliver it!</div>
+                    <div class="instruction">Say this to your station helper to receive the Hall Pass envelope. Then deliver it to the team on the label!</div>
                 </div>
                 <button class="btn btn-outline" id="s-delivered-btn">We Delivered the Hall Pass</button>
             </div>
@@ -266,13 +283,13 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
                     <div class="hpn-title">Hall Pass Received!</div>
                     <div class="hpn-sub">Use its contents to solve Layer 2.</div>
                 </div>
-                <div class="prompt" id="s-l2-prompt">Use the Hall Pass you received to solve Layer 2, then enter the answer.</div>
+                <div id="s-l2-content"></div>
                 <input type="text" class="input" id="s-l2-input" placeholder="Enter your answer..." autocomplete="off">
                 <button class="btn btn-coral" id="s-l2-submit">Submit Answer</button>
-                <div id="s-l2-wrong" style="display:none;color:var(--coral);text-align:center;margin-top:8px;font-size:14px;">Not quite — look again.</div>
+                <div id="s-l2-wrong" style="display:none;" class="wrong-msg">Not quite — look again.</div>
             </div>
             <div id="s-puzzle-done" style="display:none;">
-                <div class="confirm"><span class="big">⭐</span>Letter found!<br><span style="font-size:13px;color:var(--muted);">Watch the Unity Board!</span></div>
+                <div class="confirm"><span class="big">⭐</span>Letter found!<div class="sub">Watch the Unity Board!</div></div>
             </div>
         </div>
     </div>
@@ -280,32 +297,32 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
         <div class="s-header"><div class="chip">Final Challenge</div><h2>Decode the Word</h2></div>
         <div class="s-body">
             <div style="text-align:center;padding:20px;">
-                <div style="font-size:48px;margin-bottom:12px;" id="s-my-symbol"></div>
-                <div style="font-family:'Big Shoulders Display',sans-serif;font-size:28px;font-weight:900;color:var(--coral);letter-spacing:3px;" id="s-my-letter"></div>
-                <div style="color:var(--muted);font-size:14px;margin-top:12px;">Your symbol = your letter. Find the other teams and decode the word together!</div>
+                <div style="font-size:56px;margin-bottom:14px;animation:popIn .6s;" id="s-my-symbol"></div>
+                <div style="font-family:var(--font-varsity);font-size:32px;font-weight:900;color:var(--coral);letter-spacing:4px;" id="s-my-letter"></div>
+                <div style="color:var(--muted);font-size:14px;margin-top:16px;line-height:1.6;">Your symbol = your letter.<br>Find the other teams and decode the word together!</div>
             </div>
         </div>
     </div>
     <div id="s-finale" class="phase">
         <div class="s-body"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;">
-            <div style="font-size:48px;margin-bottom:16px;">🎉</div>
-            <div style="font-family:'Big Shoulders Display',sans-serif;font-size:36px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:4px;">UNITY!</div>
+            <div style="font-size:56px;margin-bottom:16px;animation:popIn .5s;">🎉</div>
+            <div style="font-family:var(--font-varsity);font-size:40px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:6px;">UNITY!</div>
             <div style="color:var(--muted);font-size:16px;margin-top:16px;font-style:italic;">The locker is open.</div>
         </div></div>
     </div>
     <div id="s-legacy" class="phase">
         <div class="s-header"><div class="chip">Your Legacy</div><h2>Choose Your Scripture</h2></div>
-        <div class="s-body"><div style="text-align:center;padding:20px;">
-            <div style="font-size:36px;margin-bottom:12px;">📖</div>
-            <div style="color:var(--cream);font-size:16px;line-height:1.6;">Come forward and choose the scripture card that speaks to you. Write your name on it. Slide it into your luggage tag.</div>
-            <div style="color:var(--muted);font-size:14px;margin-top:16px;font-style:italic;">This is yours — your legacy.</div>
+        <div class="s-body"><div style="text-align:center;padding:24px;">
+            <div style="font-size:40px;margin-bottom:14px;">📖</div>
+            <div style="color:var(--cream);font-size:16px;line-height:1.7;">Come forward and choose the scripture card that speaks to you.</div>
+            <div style="color:var(--muted);font-size:14px;margin-top:14px;font-style:italic;line-height:1.6;">Write your name on it. Slide it into your luggage tag. This is yours — your legacy.</div>
         </div></div>
     </div>
 </div>
 
-<!-- TEACHER MODE -->
+<!-- ==================== TEACHER MODE ==================== -->
 <div id="teacher" class="mode">
-    <div class="t-header"><h2>Gamemaster</h2></div>
+    <div class="t-header"><h2>🐾 Gamemaster</h2></div>
     <div class="t-body">
         <div class="t-current"><div class="curr-label">Current Phase</div><div class="curr-name" id="t-phase-name">Lobby</div></div>
         <div class="t-stats">
@@ -317,29 +334,25 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
             <button class="btn btn-outline" onclick="prevPhase()">← Back</button>
             <button class="btn btn-coral" onclick="nextPhase()" style="margin-top:0;">Next →</button>
         </div>
-
         <div class="t-section" id="t-timer-section" style="display:none;">
             <div class="t-section-title">Timer Control</div>
             <div class="t-timer-config">
-                <input type="number" class="input" id="t-timer-min" value="28" min="1" max="60" style="width:60px;text-align:center;padding:8px;">
-                <span>minutes</span>
-                <button class="btn btn-coral" onclick="startTimer()" style="margin-top:0;width:auto;padding:10px 20px;">Start</button>
-                <button class="btn btn-outline" onclick="stopTimer()" style="margin-top:0;width:auto;padding:10px 20px;">Stop</button>
+                <input type="number" class="input" id="t-timer-min" value="28" min="1" max="60" style="width:60px;text-align:center;padding:8px;font-size:16px;">
+                <span>min</span>
+                <button class="btn btn-coral" onclick="startTimer()" style="margin-top:0;width:auto;padding:10px 18px;">Start</button>
+                <button class="btn btn-outline" onclick="stopTimer()" style="margin-top:0;width:auto;padding:10px 18px;">Stop</button>
+                <button class="btn btn-danger" onclick="resetTimer()" style="margin-top:0;width:auto;padding:10px 18px;">Reset</button>
             </div>
         </div>
-
         <div class="t-section" id="t-teams-section" style="display:none;">
-            <div class="t-section-title">Teams + Code Words</div>
+            <div class="t-section-title">Teams · Code Words</div>
             <div id="t-team-list"></div>
         </div>
-
         <div class="t-section" id="t-finale-section" style="display:none;">
             <div class="t-section-title">Finale Control</div>
             <button class="btn btn-coral" onclick="triggerFinale()" style="font-size:18px;padding:18px;">🎉 WHAT TEAM? WILDCATS!</button>
         </div>
-
         <div class="t-phases" id="t-phase-list"></div>
-
         <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);">
             <button class="btn btn-danger" onclick="resetAll()">Reset All Data</button>
         </div>
@@ -356,13 +369,86 @@ if(!IS_DEMO){
 
 var PHASES=['lobby','video','assign','puzzles','converge','finale','legacy'];
 var PHASE_META={lobby:{name:'Lobby',desc:'Girls joining'},video:{name:'Video',desc:'Cinematic transmission'},assign:{name:'Assign',desc:'Clique reveal'},puzzles:{name:'Puzzles',desc:'Escape room active'},converge:{name:'Converge',desc:'Decode the word'},finale:{name:'Finale',desc:'What team? Wildcats!'},legacy:{name:'Legacy',desc:'Scripture + luggage tag'}};
+
 var CLIQUES=[
-    {name:'Jocks',emoji:'🏀',station:'The Locker Room',letter:'U',mission:'Your strength lifts others. Lead with action.',passTo:1},
-    {name:'Brainiacs',emoji:'🧪',station:'The Lab',letter:'N',mission:'Your mind sees what others miss. Light the way.',passTo:2},
-    {name:'Drama',emoji:'🎭',station:'The Stage',letter:'I',mission:'Your voice gives words to what others feel. Speak truth.',passTo:3},
-    {name:'Skaters',emoji:'🎨',station:'The Mural',letter:'T',mission:'Your creativity builds what didn\u2019t exist before. Create.',passTo:4},
-    {name:'Sharpay',emoji:'⭐',station:'The Audition',letter:'Y',mission:'Your sparkle draws people together. Shine.',passTo:0},
+    {name:'Jocks',emoji:'🏀',station:'The Locker Room',letter:'U',mission:'Your strength lifts others. Lead with action.',passTo:1,passToName:'Brainiacs'},
+    {name:'Brainiacs',emoji:'🧪',station:'The Lab',letter:'N',mission:'Your mind sees what others miss. Light the way.',passTo:2,passToName:'Drama'},
+    {name:'Drama',emoji:'🎭',station:'The Stage',letter:'I',mission:'Your voice gives words to what others feel. Speak truth.',passTo:3,passToName:'Skaters'},
+    {name:'Skaters',emoji:'🎨',station:'The Mural',letter:'T',mission:'Your creativity builds what didn\'t exist before. Create.',passTo:4,passToName:'Sharpay'},
+    {name:'Sharpay',emoji:'⭐',station:'The Audition',letter:'Y',mission:'Your sparkle draws people together. Shine.',passTo:0,passToName:'Jocks'},
 ];
+
+var PUZZLE_CONTENT={
+    0:{
+        l1Title:'The Jersey Decoder',
+        l1Desc:'Five sports jerseys hang on the clothesline at your station. Each one has a number on the front and a word on the back.',
+        l1Steps:'Arrange the jerseys in numerical order. Read the words on the back, in order. They form a scripture.',
+        l1Scripture:'"The eye cannot say unto the hand, I have no need of thee: nor again the head to the feet, I have no need of you."',
+        l1Ref:'Where is this verse found? Enter the book, chapter, and verse as digits.',
+        l1Hint:'1 Corinthians 12:21 — compress to digits: 1 + 12 + 21',
+        l1Placeholder:'Book Chapter Verse (digits only)',
+        l2Title:'The Playbook',
+        l2Desc:'You received a Hall Pass from Sharpay\'s team — a torn playbill page with 5 highlighted names.',
+        l2Steps:'Your phone shows a playbook grid with 5 plays. Match the highlighted names to the correct plays. The completed grid reveals your letter.',
+        l2Placeholder:'Enter your answer...',
+    },
+    1:{
+        l1Title:'The Cipher Lab',
+        l1Desc:'A lab report sits on your table. It contains a number cipher where A=1, B=2, C=3, and so on.',
+        l1Steps:'Decode the full message. It\'s a scripture about the body of Christ.',
+        l1Scripture:'"For as the body is one, and hath many members, and all the members of that one body, being many, are one body: so also is Christ."',
+        l1Ref:'What verse is this? Enter the book, chapter, and verse as digits.',
+        l1Hint:'1 Corinthians 12:12 — compress to digits: 1 + 12 + 12',
+        l1Placeholder:'Book Chapter Verse (digits only)',
+        l2Title:'UV Revelation',
+        l2Desc:'You received a Hall Pass from the Jocks — a card that says "Shine the light." There\'s a UV blacklight at your station.',
+        l2Steps:'Shine the blacklight on the card. A hidden code will be revealed. Enter that code.',
+        l2Placeholder:'Enter the hidden code...',
+    },
+    2:{
+        l1Title:'The Missing Lyrics',
+        l1Desc:'Three printed lyric sheets sit at your station — from "Breaking Free," "We\'re All in This Together," and "Start of Something New."',
+        l1Steps:'Eight words have been blanked out. Fill in the missing words from memory or teamwork. Take the first letter of each missing word, in order.',
+        l1Scripture:null,
+        l1Ref:'The first letters spell an 8-letter word. Enter it.',
+        l1Hint:'The letters spell O-P-E-N-W-I-D-E',
+        l1Placeholder:'8-letter word',
+        l2Title:'The Director\'s Notes',
+        l2Desc:'You received a Hall Pass from the Brainiacs — a card with three HSM song titles and circled words within each.',
+        l2Steps:'Your phone shows "Director\'s Notes" — a script with blanks. The circled words from the Hall Pass fill the blanks. Read the first letter of each completed line.',
+        l2Placeholder:'Enter the code...',
+    },
+    3:{
+        l1Title:'The Shattered Mural',
+        l1Desc:'A Wildcat crest has been shattered into about 20 puzzle pieces. One corner is missing — it arrives via the Drama team\'s Hall Pass.',
+        l1Steps:'Assemble the mural without the missing piece. Read the text woven into the edge of the image.',
+        l1Scripture:'"Be one; and if ye are not one ye are not mine."',
+        l1Ref:'What reference is this? Enter book and verse as a code.',
+        l1Hint:'D&C 38:27 — enter as DC3827',
+        l1Placeholder:'Book + numbers (e.g., DC3827)',
+        l2Title:'The Hidden Mark',
+        l2Desc:'The Drama team delivered the missing corner piece. When placed, it completes a QR code hidden in the mural.',
+        l2Steps:'Place the final piece. Scan the completed QR code — it opens a riddle. Solve it.',
+        l2Placeholder:'Enter the riddle answer...',
+    },
+    4:{
+        l1Title:'The Cast Sorting',
+        l1Desc:'An "Audition Playbill" lists 12 fictional cast members, each with a bio describing a spiritual gift. Eight cards list spiritual gifts from 1 Corinthians 12 and Moroni 10.',
+        l1Steps:'Match each cast member to their spiritual gift. Then take the first letter of each cast member\'s name, in the order of the gifts as listed on the cards.',
+        l1Scripture:null,
+        l1Ref:'The first letters spell a phrase. Enter it.',
+        l1Hint:'Read the first letters of the matched cast names in gift-card order',
+        l1Placeholder:'Enter the phrase...',
+        l2Title:'The Standing Ovation',
+        l2Desc:'You received a Hall Pass from the Skaters — an incorrectly sorted cast list.',
+        l2Steps:'Your phone shows the same cast list, scrambled differently. Using the Skaters\' version as a key, re-sort into the correct order. The sorted names reveal: "Ye are the light of the world."',
+        l2Scripture:'"Ye are the light of the world. A city that is set on an hill cannot be hid."',
+        l2Ref:'Enter the scripture reference as a code.',
+        l2Hint:'Matthew 5:14 — enter as MATT514',
+        l2Placeholder:'Book + chapter + verse (e.g., MATT514)',
+    }
+};
+
 var SYMBOLS=['🏀','🧪','🎭','🎨','⭐'];
 var CODE_POOL=['BREAK FREE','HEAD IN','START NEW','BOP TOP','GO WILDCATS','SUMMER TIME','BET ON IT','SCREAM OUT','RIGHT NOW','FABULOUS','WORK IT','NOW NEVER','EVERYDAY','WHAT TIME','ALL STAR'];
 var L1_ANSWERS={0:'11221',1:'11212',2:'OPENWIDE',3:'DC3827',4:null};
@@ -392,11 +478,7 @@ function showPhase(p){
     var tt=document.getElementById('t-teams-section');if(tt)tt.style.display=(p==='puzzles'||p==='converge')?'block':'none';
     var tf=document.getElementById('t-finale-section');if(tf)tf.style.display=p==='converge'?'block':'none';
 }
-
-function setPhase(p){
-    if(IS_DEMO){processState({currentPhase:p});return;}
-    db.collection('wildcat-state').doc('config').set({currentPhase:p},{merge:true});
-}
+function setPhase(p){if(IS_DEMO){processState({currentPhase:p});return;}db.collection('wildcat-state').doc('config').set({currentPhase:p},{merge:true});}
 function nextPhase(){var i=PHASES.indexOf(currentPhase);if(i<PHASES.length-1){var next=PHASES[i+1];if(next==='assign')assignTeams();setPhase(next);}}
 function prevPhase(){var i=PHASES.indexOf(currentPhase);if(i>0)setPhase(PHASES[i-1]);}
 function jumpToPhase(p){if(p==='assign')assignTeams();setPhase(p);}
@@ -407,7 +489,6 @@ function generateCodeWords(){
     for(var i=0;i<5;i++){var idx=Math.floor(Math.random()*pool.length);words.push(pool.splice(idx,1)[0]);}
     return words;
 }
-
 function assignTeams(){
     if(IS_DEMO)return;
     db.collection('wildcat-players').get().then(function(snap){
@@ -415,10 +496,7 @@ function assignTeams(){
         players.sort(function(){return Math.random()-.5;});
         var codeWords=generateCodeWords();
         var batch=db.batch();
-        players.forEach(function(p,i){
-            var teamIdx=i%5;
-            batch.update(db.collection('wildcat-players').doc(p.id),{teamIndex:teamIdx});
-        });
+        players.forEach(function(p,i){batch.update(db.collection('wildcat-players').doc(p.id),{teamIndex:i%5});});
         for(var t=0;t<5;t++){
             batch.set(db.collection('wildcat-teams').doc('team-'+t),{
                 cliqueIndex:t,codeWord:codeWords[t],
@@ -452,6 +530,15 @@ function stopTimer(){
     if(timerInterval)clearInterval(timerInterval);
     if(!IS_DEMO)db.collection('wildcat-state').doc('config').set({timerEnd:null},{merge:true});
 }
+function resetTimer(){
+    if(timerInterval)clearInterval(timerInterval);
+    timerInterval=null;
+    var min=document.getElementById('t-timer-min').value||'28';
+    var str=min+':00';
+    var dt=document.getElementById('d-timer');if(dt){dt.textContent=str;dt.classList.remove('warning');}
+    var tt=document.getElementById('t-timer-display');if(tt)tt.textContent=str;
+    if(!IS_DEMO)db.collection('wildcat-state').doc('config').set({timerEnd:null},{merge:true});
+}
 function runTimer(end){
     if(timerInterval)clearInterval(timerInterval);
     timerInterval=setInterval(function(){
@@ -468,7 +555,7 @@ function runTimer(end){
 function renderUnityBoard(){
     var slots=document.getElementById('d-letter-slots');
     if(!slots)return;
-    slots.innerHTML=CLIQUES.map(function(c,i){return '<div class="ub-slot" id="d-slot-'+i+'">'+c.letter+'</div>';}).join('');
+    slots.innerHTML=CLIQUES.map(function(c,i){return '<div class="ub-slot" id="d-slot-'+i+'">?</div>';}).join('');
 }
 function renderTeamCards(teams){
     var container=document.getElementById('d-team-cards');
@@ -484,7 +571,7 @@ function renderTeamCards(teams){
     });
     CLIQUES.forEach(function(c,i){
         var slot=document.getElementById('d-slot-'+i);
-        if(slot&&teams[i]&&teams[i].letterFound)slot.classList.add('found');
+        if(slot&&teams[i]&&teams[i].letterFound){slot.classList.add('found');slot.textContent=c.letter;}
     });
     var found=0;CLIQUES.forEach(function(c,i){if(teams[i]&&teams[i].letterFound)found++;});
     var tl=document.getElementById('t-letters');if(tl)tl.textContent=found;
@@ -496,7 +583,7 @@ function renderTeacherTeams(teams){
     CLIQUES.forEach(function(c,i){
         var t=teams[i]||{};
         var d=document.createElement('div');d.className='t-team-row';
-        d.innerHTML='<span class="ttr-name">'+c.emoji+' '+c.name+'</span><span class="ttr-code">'+(t.codeWord||'—')+'</span><span class="ttr-status">'+(t.letterFound?'✅':t.layer1Done?'L1 ✓':'...')+'</span>';
+        d.innerHTML='<span class="ttr-name">'+c.emoji+' '+c.name+'</span><span class="ttr-code">'+(t.codeWord||'—')+'</span><span class="ttr-status">'+(t.letterFound?'✅ Found':t.layer2Done?'L2 ✓':t.layer1Done?'L1 ✓':'...')+'</span>';
         container.appendChild(d);
     });
 }
@@ -506,15 +593,38 @@ function renderAssignment(){
     if(myTeamIndex<0)return;
     var c=CLIQUES[myTeamIndex];
     var el=document.getElementById('s-assign-content');
-    if(el)el.innerHTML='<div class="emoji">'+c.emoji+'</div><div class="clique">'+c.name+'</div><div class="station">→ Station: '+c.station+'</div><div class="mission">'+c.mission+'</div>';
+    if(el)el.innerHTML='<div class="emoji">'+c.emoji+'</div><div class="clique">'+c.name+'</div><div class="station">→ '+c.station+'</div><div class="mission">'+c.mission+'</div>';
 }
 
-/* === STUDENT: PUZZLE UI === */
+/* === STUDENT: PUZZLE UI (RICH CONTENT) === */
 function renderPuzzleUI(){
     if(myTeamIndex<0)return;
     var c=CLIQUES[myTeamIndex];
+    var p=PUZZLE_CONTENT[myTeamIndex];
     document.getElementById('s-puzzle-chip').textContent=c.emoji+' '+c.name;
     document.getElementById('s-puzzle-title').textContent=c.station;
+    document.getElementById('s-puzzle-ref').textContent=c.mission;
+
+    var l1Html='<div class="layer-badge l1">Layer 1 · Physical Puzzle</div>';
+    l1Html+='<div class="puzzle-card"><div class="puzzle-label">Your Challenge</div><div class="puzzle-title">'+esc(p.l1Title)+'</div>';
+    l1Html+='<div class="puzzle-desc">'+esc(p.l1Desc)+'</div>';
+    l1Html+='<div class="puzzle-desc" style="color:var(--cream);">'+esc(p.l1Steps)+'</div>';
+    if(p.l1Scripture){l1Html+='<div class="puzzle-scripture">'+esc(p.l1Scripture)+'<span class="verse-ref">Identify this verse</span></div>';}
+    l1Html+='</div>';
+    l1Html+='<div class="puzzle-card" style="border-color:rgba(230,57,70,.15);"><div class="puzzle-label" style="color:var(--coral);">Answer</div>';
+    l1Html+='<div class="puzzle-desc" style="font-size:13px;">'+esc(p.l1Ref)+'</div></div>';
+    document.getElementById('s-l1-content').innerHTML=l1Html;
+    document.getElementById('s-l1-input').placeholder=p.l1Placeholder||'Enter your answer...';
+
+    var l2Html='<div class="layer-badge l2">Layer 2 · Digital Puzzle</div>';
+    l2Html+='<div class="puzzle-card" style="border-color:rgba(14,165,233,.15);"><div class="puzzle-label" style="color:var(--teal);">Your Challenge</div><div class="puzzle-title">'+esc(p.l2Title)+'</div>';
+    l2Html+='<div class="puzzle-desc">'+esc(p.l2Desc)+'</div>';
+    l2Html+='<div class="puzzle-desc" style="color:var(--cream);">'+esc(p.l2Steps)+'</div>';
+    if(p.l2Scripture){l2Html+='<div class="puzzle-scripture">'+esc(p.l2Scripture)+'<span class="verse-ref">Identify this verse</span></div>';}
+    l2Html+='</div>';
+    if(p.l2Ref){l2Html+='<div class="puzzle-card" style="border-color:rgba(14,165,233,.15);"><div class="puzzle-label" style="color:var(--teal);">Answer</div><div class="puzzle-desc" style="font-size:13px;">'+esc(p.l2Ref)+'</div></div>';}
+    document.getElementById('s-l2-content').innerHTML=l2Html;
+    document.getElementById('s-l2-input').placeholder=p.l2Placeholder||'Enter your answer...';
 }
 
 /* === STUDENT: CONVERGE === */
@@ -533,7 +643,7 @@ function renderConvergeDisplay(){
 /* === FINALE === */
 function triggerFinale(){setPhase('finale');}
 
-/* === STUDENT SUBMIT HANDLERS === */
+/* === EVENT HANDLERS === */
 document.getElementById('s-partner-check').addEventListener('change',function(){
     document.getElementById('s-partner-field').style.display=this.checked?'block':'none';
 });
@@ -544,9 +654,7 @@ document.getElementById('s-join-btn').addEventListener('click',function(){
     var partner=document.getElementById('s-partner-check').checked?document.getElementById('s-partner-name').value.trim():'';
     myName=name;
     try{localStorage.setItem('wl-name',name);}catch(e){}
-    if(!IS_DEMO){
-        db.collection('wildcat-players').add({name:name,partnerName:partner||null,teamIndex:-1,ts:firebase.firestore.FieldValue.serverTimestamp()});
-    }
+    if(!IS_DEMO){db.collection('wildcat-players').add({name:name,partnerName:partner||null,teamIndex:-1,ts:firebase.firestore.FieldValue.serverTimestamp()});}
     document.getElementById('s-login-form').style.display='none';
     document.getElementById('s-login-done').style.display='block';
 });
@@ -556,14 +664,13 @@ document.getElementById('s-l1-submit').addEventListener('click',function(){
     var input=document.getElementById('s-l1-input');
     var answer=input.value.trim().toUpperCase().replace(/\s+/g,'');
     var correct=L1_ANSWERS[myTeamIndex];
-    if(!correct){document.getElementById('s-puzzle-layer1').style.display='none';document.getElementById('s-puzzle-codeword').style.display='block';if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer1Done:true},{merge:true});return;}
-    if(answer===correct){
+    if(!correct||answer===correct){
         document.getElementById('s-puzzle-layer1').style.display='none';
         document.getElementById('s-puzzle-codeword').style.display='block';
         if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer1Done:true},{merge:true});
     } else {
-        document.getElementById('s-l1-wrong').style.display='block';
-        setTimeout(function(){document.getElementById('s-l1-wrong').style.display='none';},3000);
+        var w=document.getElementById('s-l1-wrong');w.style.display='block';
+        setTimeout(function(){w.style.display='none';},3000);
     }
 });
 
@@ -578,14 +685,13 @@ document.getElementById('s-l2-submit').addEventListener('click',function(){
     var input=document.getElementById('s-l2-input');
     var answer=input.value.trim().toUpperCase().replace(/\s+/g,'');
     var correct=L2_ANSWERS[myTeamIndex];
-    if(!correct){document.getElementById('s-puzzle-layer2').style.display='none';document.getElementById('s-puzzle-done').style.display='block';if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer2Done:true,letterFound:true},{merge:true});return;}
-    if(answer===correct){
+    if(!correct||answer===correct){
         document.getElementById('s-puzzle-layer2').style.display='none';
         document.getElementById('s-puzzle-done').style.display='block';
         if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer2Done:true,letterFound:true},{merge:true});
     } else {
-        document.getElementById('s-l2-wrong').style.display='block';
-        setTimeout(function(){document.getElementById('s-l2-wrong').style.display='none';},3000);
+        var w=document.getElementById('s-l2-wrong');w.style.display='block';
+        setTimeout(function(){w.style.display='none';},3000);
     }
 });
 
@@ -593,16 +699,14 @@ document.getElementById('s-l2-submit').addEventListener('click',function(){
 if(!IS_DEMO){
     db.collection('wildcat-state').doc('config').onSnapshot(function(doc){
         if(!doc.exists){db.collection('wildcat-state').doc('config').set({currentPhase:'lobby'});return;}
-        var data=doc.data();
-        processState(data);
+        var data=doc.data();processState(data);
         if(data.timerEnd)runTimer(data.timerEnd);
     });
     db.collection('wildcat-players').orderBy('ts','asc').onSnapshot(function(snap){
         var count=0;var joinList=document.getElementById('d-join-list');
         if(joinList)joinList.innerHTML='';
         snap.forEach(function(doc){
-            count++;
-            var d=doc.data();
+            count++;var d=doc.data();
             if(joinList){var card=document.createElement('div');card.className='join-card';card.textContent=d.name+(d.partnerName?' & '+d.partnerName:'');joinList.appendChild(card);}
             if(d.name===myName&&d.teamIndex>=0){myTeamIndex=d.teamIndex;try{localStorage.setItem('wl-team',myTeamIndex);}catch(e){}}
         });
@@ -611,42 +715,37 @@ if(!IS_DEMO){
     });
     db.collection('wildcat-teams').onSnapshot(function(snap){
         var teams={};
-        snap.forEach(function(doc){
-            var idx=parseInt(doc.id.replace('team-',''));
-            teams[idx]=doc.data();
-        });
-        renderTeamCards(teams);
-        renderTeacherTeams(teams);
+        snap.forEach(function(doc){var idx=parseInt(doc.id.replace('team-',''));teams[idx]=doc.data();});
+        renderTeamCards(teams);renderTeacherTeams(teams);
         if(myTeamIndex>=0&&teams[myTeamIndex]){
             var myTeam=teams[myTeamIndex];
-            var cw=document.getElementById('s-codeword-text');
-            if(cw)cw.textContent=myTeam.codeWord||'';
+            var cw=document.getElementById('s-codeword-text');if(cw)cw.textContent=myTeam.codeWord||'';
             var destIdx=CLIQUES[myTeamIndex].passTo;
             if(teams[destIdx]&&teams[destIdx].hallPassDelivered){
-                var hp=document.getElementById('s-hp-received');
-                if(hp)hp.style.display='block';
+                var hp=document.getElementById('s-hp-received');if(hp)hp.style.display='block';
             }
         }
     });
-} else {
-    processState({currentPhase:'lobby'});
-}
+} else {processState({currentPhase:'lobby'});}
 
 /* === RESET === */
 async function resetAll(){
     if(!confirm('Delete ALL data?'))return;
     if(!confirm('Really sure?'))return;
+    if(timerInterval)clearInterval(timerInterval);timerInterval=null;
+    var dt=document.getElementById('d-timer');if(dt)dt.textContent='28:00';
+    var tt=document.getElementById('t-timer-display');if(tt)tt.textContent='28:00';
     if(!IS_DEMO){
         var cols=['wildcat-state','wildcat-players','wildcat-teams'];
         for(var i=0;i<cols.length;i++){var s=await db.collection(cols[i]).get();var b=db.batch();s.forEach(function(d){b.delete(d.ref);});await b.commit();}
-        await db.collection('wildcat-state').doc('config').set({currentPhase:'lobby'});
+        await db.collection('wildcat-state').doc('config').set({currentPhase:'lobby',timerEnd:null});
     }
     myTeamIndex=-1;myName='';
     try{localStorage.removeItem('wl-name');localStorage.removeItem('wl-team');}catch(e){}
     alert('Reset complete.');
 }
 
-function escapeHtml(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+function esc(t){if(!t)return '';var d=document.createElement('div');d.textContent=t;return d.innerHTML;}
 
 var mode=detectMode();activateMode(mode);
 window.addEventListener('hashchange',function(){activateMode(detectMode());showPhase(currentPhase);});
