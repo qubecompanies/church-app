@@ -9,10 +9,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
-:root{--navy-deep:#0B1220;--navy:#14213D;--navy-light:#1E2A4A;--coral:#E63946;--coral-bright:#FF4D5E;--amber:#F4A261;--gold:#FFB627;--teal:#0EA5E9;--cream:#FFF5E1;--muted:#94A3B8;--success:#22C55E;
---font-display:'Monoton',sans-serif;--font-varsity:'Big Shoulders Display',sans-serif;--font-serif:'Fraunces',serif;--font-mono:'JetBrains Mono',monospace;}
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;overflow:hidden;background:var(--navy-deep);color:var(--cream);font-family:var(--font-serif);-webkit-font-smoothing:antialiased;}
+:root{--navy-deep:#0B1220;--navy:#14213D;--navy-light:#1E2A4A;--coral:#E63946;--coral-bright:#FF4D5E;--amber:#F4A261;--gold:#FFB627;--teal:#0EA5E9;--cream:#FFF5E1;--muted:#94A3B8;--success:#22C55E;--font-display:'Monoton',sans-serif;--font-varsity:'Big Shoulders Display',sans-serif;--font-serif:'Fraunces',serif;--font-mono:'JetBrains Mono',monospace;}
+*{margin:0;padding:0;box-sizing:border-box;}html,body{height:100%;overflow:hidden;background:var(--navy-deep);color:var(--cream);font-family:var(--font-serif);-webkit-font-smoothing:antialiased;}
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,0.015) 0px,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;mix-blend-mode:overlay;}
 body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");pointer-events:none;z-index:9998;opacity:0.04;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--amber);border-radius:2px;}
@@ -23,166 +21,82 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
 @keyframes lockPulse{0%,100%{border-color:rgba(230,57,70,.4);}50%{border-color:rgba(230,57,70,.1);}}
-@keyframes slotReveal{0%{transform:scale(0);box-shadow:0 0 0 rgba(230,57,70,0);}50%{transform:scale(1.3);box-shadow:0 0 80px rgba(255,182,39,.6),0 0 120px rgba(230,57,70,.3);}70%{transform:scale(0.95);}100%{transform:scale(1);box-shadow:0 0 30px rgba(230,57,70,.4);}}
-@keyframes screenFlash{0%{opacity:0;}15%{opacity:1;}100%{opacity:0;}}
-@keyframes finaleGlow{0%{opacity:0;}100%{opacity:1;}}
-
-/* FX layers */
 .fx-canvas{position:fixed;inset:0;z-index:9990;pointer-events:none;}
-.screen-flash{position:fixed;inset:0;z-index:9991;pointer-events:none;opacity:0;}
-.finale-glow{position:fixed;inset:0;z-index:9989;pointer-events:none;opacity:0;transition:opacity 3s;background:radial-gradient(ellipse at 50% 50%,rgba(255,182,39,.12) 0%,rgba(244,162,97,.06) 30%,transparent 65%);}
-.finale-glow.show{opacity:1;}
-
-/* DISPLAY */
+.screen-flash{position:fixed;inset:0;z-index:9991;pointer-events:none;opacity:0;transition:opacity .6s ease-out;}
+.rings-layer{position:fixed;inset:0;z-index:9989;pointer-events:none;overflow:hidden;}
+.finale-glow{position:fixed;inset:0;z-index:9988;pointer-events:none;opacity:0;transition:opacity 3s;background:radial-gradient(ellipse at 50% 50%,rgba(255,182,39,.12) 0%,rgba(244,162,97,.06) 30%,transparent 65%);}.finale-glow.show{opacity:1;}
+.team-banner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9992;pointer-events:none;opacity:0;transition:opacity .5s;font-family:var(--font-varsity);font-size:clamp(24px,4vw,40px);font-weight:900;letter-spacing:5px;text-transform:uppercase;color:var(--gold);text-shadow:0 0 30px rgba(255,182,39,.5),0 4px 20px rgba(0,0,0,.5);text-align:center;white-space:nowrap;}.team-banner.show{opacity:1;}
 #display{background:radial-gradient(ellipse at 50% 30%,#151d30 0%,var(--navy-deep) 70%);}
 .d-header{text-align:center;padding:24px 40px 12px;flex-shrink:0;}
-.d-header .phase-tag{font-family:var(--font-mono);font-size:12px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:6px;}
-.d-header .phase-tag::before{content:'● ';color:var(--coral);animation:pulse 2s infinite;}
+.d-header .phase-tag{font-family:var(--font-mono);font-size:12px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:6px;}.d-header .phase-tag::before{content:'● ';color:var(--coral);animation:pulse 2s infinite;}
 .d-header h1{font-family:var(--font-varsity);font-size:clamp(28px,5vw,56px);font-weight:900;color:var(--cream);text-transform:uppercase;letter-spacing:4px;}
 .d-body{flex:1;overflow-y:auto;padding:0 40px 30px;}
-.welcome-layout{display:flex;height:100%;align-items:center;justify-content:center;gap:60px;}
-.welcome-left{text-align:center;}
+.welcome-layout{display:flex;height:100%;align-items:center;justify-content:center;gap:60px;}.welcome-left{text-align:center;}
 .welcome-left .title{font-family:var(--font-display);font-size:clamp(36px,8vw,80px);color:var(--coral);text-shadow:0 0 60px rgba(230,57,70,0.3),4px 4px 0 var(--navy-deep);line-height:.95;}
 .welcome-left .sub{font-family:var(--font-mono);font-size:clamp(11px,1.5vw,15px);letter-spacing:5px;color:var(--amber);margin-top:12px;text-transform:uppercase;}
 .welcome-left .scan{font-size:15px;color:var(--muted);margin-top:28px;}
-.qr-wrap{background:#fff;padding:14px;border-radius:10px;display:inline-block;margin-top:12px;}
-.qr-wrap img{display:block;width:200px;height:200px;}
+.qr-wrap{background:#fff;padding:14px;border-radius:10px;display:inline-block;margin-top:12px;}.qr-wrap img{display:block;width:200px;height:200px;}
 .welcome-right{width:350px;max-height:70vh;overflow-y:auto;}
-.join-count{font-family:var(--font-mono);font-size:13px;letter-spacing:3px;color:var(--amber);text-align:center;margin-bottom:14px;}
-.join-count span{font-size:24px;font-weight:700;color:var(--coral);}
+.join-count{font-family:var(--font-mono);font-size:13px;letter-spacing:3px;color:var(--amber);text-align:center;margin-bottom:14px;}.join-count span{font-size:24px;font-weight:700;color:var(--coral);}
 .join-card{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.5));border:1px solid rgba(230,57,70,.12);border-radius:8px;padding:10px 14px;margin-bottom:6px;font-size:14px;color:var(--cream);animation:fadeUp .5s ease;}
-/* Video iframe */
 .video-frame{width:100%;height:100%;border:none;background:#000;}
-/* Board */
 .unity-board{display:flex;flex-direction:column;align-items:center;padding:20px 0;}
-.ub-timer{font-family:var(--font-mono);font-size:clamp(32px,6vw,72px);font-weight:700;color:var(--coral);text-shadow:0 0 30px rgba(230,57,70,.3);margin-bottom:30px;letter-spacing:4px;}
-.ub-timer.warning{animation:pulse 1s infinite;}
+.ub-timer{font-family:var(--font-mono);font-size:clamp(32px,6vw,72px);font-weight:700;color:var(--coral);text-shadow:0 0 30px rgba(230,57,70,.3);margin-bottom:30px;letter-spacing:4px;}.ub-timer.warning{animation:pulse 1s infinite;}
 .ub-letters{display:flex;gap:clamp(12px,3vw,28px);justify-content:center;margin-bottom:36px;}
-.ub-slot{width:clamp(60px,10vw,100px);height:clamp(72px,12vw,120px);border:2px solid rgba(230,57,70,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--font-varsity);font-size:clamp(36px,7vw,72px);font-weight:900;color:rgba(230,57,70,.15);background:rgba(230,57,70,.03);transition:all .6s;}
-.ub-slot.found{background:linear-gradient(135deg,var(--coral),var(--coral-bright));border-color:var(--coral);color:var(--cream);animation:slotReveal .8s ease;}
+.ub-slot{width:clamp(60px,10vw,100px);height:clamp(72px,12vw,120px);border:2px solid rgba(230,57,70,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--font-varsity);font-size:clamp(36px,7vw,72px);font-weight:900;color:rgba(230,57,70,.15);background:rgba(230,57,70,.03);transition:all .5s cubic-bezier(0.34,1.56,0.64,1);}
+.ub-slot.found{background:linear-gradient(135deg,var(--coral),var(--coral-bright));border-color:var(--coral);color:var(--cream);box-shadow:0 0 40px rgba(230,57,70,.5);}
 .ub-teams{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;width:100%;max-width:900px;}
-.ub-team{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;text-align:center;transition:all .3s;}
-.ub-team.done{border-color:var(--success);box-shadow:0 0 12px rgba(34,197,94,.2);}
-.ub-team .team-emoji{font-size:28px;margin-bottom:4px;}
-.ub-team .team-name{font-family:var(--font-varsity);font-size:14px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--cream);}
-.ub-team .team-status{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1px;}
-.converge-symbols{display:flex;gap:20px;justify-content:center;margin:30px 0;flex-wrap:wrap;}
-.conv-symbol{width:80px;height:80px;border:2px solid rgba(230,57,70,.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;background:rgba(230,57,70,.05);}
-/* Hint flash */
-.d-hint-flash{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:100;background:linear-gradient(145deg,rgba(14,165,233,.12),rgba(14,165,233,.06));border:1px solid rgba(14,165,233,.3);border-radius:12px;padding:16px 32px;text-align:center;opacity:0;transition:opacity .5s;pointer-events:none;max-width:600px;}
-.d-hint-flash.show{opacity:1;}
-.d-hint-flash .dhf-team{font-family:var(--font-varsity);font-size:14px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;}
-.d-hint-flash .dhf-text{font-size:15px;color:var(--cream);margin-top:4px;}
-
-/* STUDENT */
+.ub-team{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;text-align:center;transition:all .3s;}.ub-team.done{border-color:var(--success);box-shadow:0 0 12px rgba(34,197,94,.2);}
+.ub-team .team-emoji{font-size:28px;margin-bottom:4px;}.ub-team .team-name{font-family:var(--font-varsity);font-size:14px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--cream);}.ub-team .team-status{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:1px;}
+.converge-symbols{display:flex;gap:20px;justify-content:center;margin:30px 0;flex-wrap:wrap;}.conv-symbol{width:80px;height:80px;border:2px solid rgba(230,57,70,.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;background:rgba(230,57,70,.05);}
+.d-hint-flash{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:100;background:linear-gradient(145deg,rgba(14,165,233,.12),rgba(14,165,233,.06));border:1px solid rgba(14,165,233,.3);border-radius:12px;padding:16px 32px;text-align:center;opacity:0;transition:opacity .5s;pointer-events:none;max-width:600px;}.d-hint-flash.show{opacity:1;}.d-hint-flash .dhf-team{font-family:var(--font-varsity);font-size:14px;color:var(--teal);letter-spacing:2px;text-transform:uppercase;}.d-hint-flash .dhf-text{font-size:15px;color:var(--cream);margin-top:4px;}
 #student{background:radial-gradient(ellipse at top,rgba(14,165,233,0.04),transparent 60%),var(--navy-deep);}
-.s-header{text-align:center;padding:18px 20px 14px;border-bottom:1px solid rgba(244,162,97,.1);flex-shrink:0;}
-.s-header .chip{display:inline-block;font-family:var(--font-mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);background:rgba(244,162,97,.08);padding:4px 14px;border-radius:20px;border:1px solid rgba(244,162,97,.15);margin-bottom:6px;}
-.s-header h2{font-family:var(--font-varsity);font-size:24px;font-weight:900;color:var(--cream);text-transform:uppercase;letter-spacing:3px;}
-.s-header .ref{font-size:13px;font-style:italic;color:var(--muted);margin-top:2px;}
+.s-header{text-align:center;padding:18px 20px 14px;border-bottom:1px solid rgba(244,162,97,.1);flex-shrink:0;}.s-header .chip{display:inline-block;font-family:var(--font-mono);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);background:rgba(244,162,97,.08);padding:4px 14px;border-radius:20px;border:1px solid rgba(244,162,97,.15);margin-bottom:6px;}.s-header h2{font-family:var(--font-varsity);font-size:24px;font-weight:900;color:var(--cream);text-transform:uppercase;letter-spacing:3px;}.s-header .ref{font-size:13px;font-style:italic;color:var(--muted);margin-top:2px;}
 .s-body{flex:1;overflow-y:auto;padding:20px;}
-.puzzle-card{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.5));border:1px solid rgba(244,162,97,0.15);border-radius:12px;padding:16px;margin-bottom:12px;}
-.puzzle-label{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:6px;}
-.puzzle-title{font-family:var(--font-varsity);font-weight:900;font-size:18px;color:var(--cream);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
-.puzzle-desc{font-size:14px;line-height:1.7;color:rgba(255,245,225,.75);margin-bottom:12px;}
-.puzzle-scripture{font-family:var(--font-mono);font-size:12px;color:var(--gold);background:rgba(0,0,0,0.25);padding:12px 14px;border-radius:8px;letter-spacing:0.5px;line-height:1.8;margin-bottom:12px;border-left:3px solid rgba(255,182,39,.3);}
-.puzzle-scripture .verse-ref{display:block;color:var(--muted);font-size:10px;margin-top:8px;letter-spacing:2px;}
+.puzzle-card{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.5));border:1px solid rgba(244,162,97,0.15);border-radius:12px;padding:16px;margin-bottom:12px;}.puzzle-label{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:6px;}.puzzle-title{font-family:var(--font-varsity);font-weight:900;font-size:18px;color:var(--cream);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}.puzzle-desc{font-size:14px;line-height:1.7;color:rgba(255,245,225,.75);margin-bottom:12px;}
+.puzzle-scripture{font-family:var(--font-mono);font-size:12px;color:var(--gold);background:rgba(0,0,0,0.25);padding:12px 14px;border-radius:8px;letter-spacing:0.5px;line-height:1.8;margin-bottom:12px;border-left:3px solid rgba(255,182,39,.3);}.puzzle-scripture .verse-ref{display:block;color:var(--muted);font-size:10px;margin-top:8px;letter-spacing:2px;}
 .prompt{font-size:15px;color:var(--cream);margin-bottom:12px;line-height:1.6;}
-.input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(244,162,97,.2);border-radius:10px;padding:14px 16px;font-family:var(--font-varsity);font-size:18px;color:var(--cream);outline:none;transition:border-color .3s,box-shadow .3s;-webkit-appearance:none;letter-spacing:2px;text-align:center;text-transform:uppercase;}
-.input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(244,162,97,.1);}
-.input::placeholder{color:rgba(148,163,184,.3);text-transform:none;font-family:var(--font-serif);font-size:14px;letter-spacing:0;}
-.input.locked{border-color:rgba(230,57,70,.4);animation:lockPulse 1s infinite;pointer-events:none;opacity:.5;}
-.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-family:var(--font-varsity);font-size:16px;font-weight:800;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s;margin-top:14px;}
-.btn-coral{background:linear-gradient(135deg,var(--coral),var(--coral-bright));color:var(--cream);box-shadow:0 4px 16px rgba(230,57,70,.2);}
-.btn-coral:hover{box-shadow:0 6px 24px rgba(230,57,70,.35);transform:translateY(-1px);}
-.btn-coral:active{transform:translateY(0);}
-.btn-coral.locked{opacity:.4;pointer-events:none;}
-.btn-outline{background:transparent;border:1px solid rgba(244,162,97,.2);color:var(--muted);}
-.btn-outline:hover{border-color:var(--amber);color:var(--amber);}
-.check-row{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px;background:rgba(255,255,255,.02);border-radius:8px;}
-.check-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--coral);}
-.check-row label{font-size:14px;color:var(--muted);}
-.confirm{text-align:center;padding:30px 20px;color:var(--cream);font-size:16px;animation:fadeUp .5s;}
-.confirm .big{font-size:48px;display:block;margin-bottom:10px;animation:popIn .5s;}
-.confirm .sub{font-size:13px;color:var(--muted);margin-top:4px;}
-.wrong-msg{color:var(--coral);text-align:center;margin-top:10px;font-size:13px;font-family:var(--font-mono);letter-spacing:1px;animation:shake .4s ease;}
-.lockout-msg{text-align:center;margin-top:10px;font-family:var(--font-mono);font-size:12px;color:var(--coral);letter-spacing:2px;}
-.assign-reveal{text-align:center;padding:30px 20px;animation:fadeUp .8s;}
-.assign-reveal .emoji{font-size:72px;animation:popIn .6s;margin-bottom:14px;}
-.assign-reveal .clique{font-family:var(--font-varsity);font-size:40px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:5px;}
-.assign-reveal .station{font-family:var(--font-mono);font-size:11px;letter-spacing:4px;color:var(--amber);margin-top:10px;text-transform:uppercase;}
-.assign-reveal .mission{font-size:15px;color:rgba(255,245,225,.6);margin-top:18px;line-height:1.7;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;}
+.input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(244,162,97,.2);border-radius:10px;padding:14px 16px;font-family:var(--font-varsity);font-size:18px;color:var(--cream);outline:none;transition:border-color .3s,box-shadow .3s;-webkit-appearance:none;letter-spacing:2px;text-align:center;text-transform:uppercase;}.input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(244,162,97,.1);}.input::placeholder{color:rgba(148,163,184,.3);text-transform:none;font-family:var(--font-serif);font-size:14px;letter-spacing:0;}.input.locked{border-color:rgba(230,57,70,.4);animation:lockPulse 1s infinite;pointer-events:none;opacity:.5;}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-family:var(--font-varsity);font-size:16px;font-weight:800;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s;margin-top:14px;}.btn-coral{background:linear-gradient(135deg,var(--coral),var(--coral-bright));color:var(--cream);box-shadow:0 4px 16px rgba(230,57,70,.2);}.btn-coral:hover{box-shadow:0 6px 24px rgba(230,57,70,.35);transform:translateY(-1px);}.btn-coral:active{transform:translateY(0);}.btn-coral.locked{opacity:.4;pointer-events:none;}.btn-outline{background:transparent;border:1px solid rgba(244,162,97,.2);color:var(--muted);}.btn-outline:hover{border-color:var(--amber);color:var(--amber);}
+.check-row{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px;background:rgba(255,255,255,.02);border-radius:8px;}.check-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--coral);}.check-row label{font-size:14px;color:var(--muted);}
+.confirm{text-align:center;padding:30px 20px;color:var(--cream);font-size:16px;animation:fadeUp .5s;}.confirm .big{font-size:48px;display:block;margin-bottom:10px;animation:popIn .5s;}.confirm .sub{font-size:13px;color:var(--muted);margin-top:4px;}
+.wrong-msg{color:var(--coral);text-align:center;margin-top:10px;font-size:13px;font-family:var(--font-mono);letter-spacing:1px;animation:shake .4s ease;}.lockout-msg{text-align:center;margin-top:10px;font-family:var(--font-mono);font-size:12px;color:var(--coral);letter-spacing:2px;}
+.assign-reveal{text-align:center;padding:30px 20px;animation:fadeUp .8s;}.assign-reveal .emoji{font-size:72px;animation:popIn .6s;margin-bottom:14px;}.assign-reveal .clique{font-family:var(--font-varsity);font-size:40px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:5px;}.assign-reveal .station{font-family:var(--font-mono);font-size:11px;letter-spacing:4px;color:var(--amber);margin-top:10px;text-transform:uppercase;}.assign-reveal .mission{font-size:15px;color:rgba(255,245,225,.6);margin-top:18px;line-height:1.7;font-style:italic;max-width:320px;margin-left:auto;margin-right:auto;}
 .waiting{text-align:center;padding:50px 20px;color:var(--muted);}.waiting .icon{font-size:40px;display:block;margin-bottom:12px;}
-.code-word-display{text-align:center;padding:24px;margin:16px 0;background:linear-gradient(145deg,rgba(230,57,70,.06),rgba(230,57,70,.02));border:1px solid rgba(230,57,70,.2);border-radius:12px;}
-.code-word-display .label{font-family:var(--font-mono);font-size:10px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
-.code-word-display .word{font-family:var(--font-varsity);font-size:36px;font-weight:900;color:var(--coral);letter-spacing:6px;text-transform:uppercase;text-shadow:0 0 20px rgba(230,57,70,.3);}
-.code-word-display .instruction{font-size:13px;color:var(--amber);margin-top:10px;line-height:1.5;}
-.hall-pass-notif{text-align:center;padding:16px;margin:12px 0;background:linear-gradient(145deg,rgba(34,197,94,.06),rgba(34,197,94,.02));border:1px solid rgba(34,197,94,.2);border-radius:10px;animation:fadeUp .5s;}
-.hall-pass-notif .hpn-title{font-family:var(--font-varsity);font-size:18px;font-weight:800;color:var(--success);letter-spacing:2px;text-transform:uppercase;}
-.hall-pass-notif .hpn-sub{font-size:13px;color:var(--muted);margin-top:4px;}
-.layer-badge{display:inline-block;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;border-radius:12px;margin-bottom:10px;}
-.layer-badge.l1{color:var(--amber);background:rgba(244,162,97,.1);border:1px solid rgba(244,162,97,.2);}
-.layer-badge.l2{color:var(--teal);background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);}
-.s-hint-box{margin:12px 0;padding:12px 14px;background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.15);border-radius:10px;animation:fadeUp .5s;}
-.s-hint-box .shb-label{font-family:var(--font-mono);font-size:9px;letter-spacing:3px;color:var(--teal);text-transform:uppercase;margin-bottom:4px;}
-.s-hint-box .shb-text{font-size:14px;color:var(--cream);line-height:1.6;font-style:italic;}
-
-/* TEACHER */
-#teacher{background:var(--navy-deep);}
-.t-header{text-align:center;padding:16px;border-bottom:1px solid rgba(244,162,97,.1);flex-shrink:0;}
-.t-header h2{font-family:var(--font-varsity);font-size:20px;font-weight:900;color:var(--coral);letter-spacing:4px;text-transform:uppercase;}
-.t-body{flex:1;overflow-y:auto;padding:16px;}
-.t-current{text-align:center;padding:20px;background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:16px;}
-.t-current .curr-label{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
-.t-current .curr-name{font-family:var(--font-varsity);font-size:24px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:3px;}
-.t-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
-.t-stat{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;text-align:center;}
-.t-stat .num{font-family:var(--font-varsity);font-size:28px;font-weight:900;color:var(--coral);}
-.t-stat .lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+.code-word-display{text-align:center;padding:24px;margin:16px 0;background:linear-gradient(145deg,rgba(230,57,70,.06),rgba(230,57,70,.02));border:1px solid rgba(230,57,70,.2);border-radius:12px;}.code-word-display .label{font-family:var(--font-mono);font-size:10px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}.code-word-display .word{font-family:var(--font-varsity);font-size:36px;font-weight:900;color:var(--coral);letter-spacing:6px;text-transform:uppercase;text-shadow:0 0 20px rgba(230,57,70,.3);}.code-word-display .instruction{font-size:13px;color:var(--amber);margin-top:10px;line-height:1.5;}
+.hall-pass-notif{text-align:center;padding:16px;margin:12px 0;background:linear-gradient(145deg,rgba(34,197,94,.06),rgba(34,197,94,.02));border:1px solid rgba(34,197,94,.2);border-radius:10px;animation:fadeUp .5s;}.hall-pass-notif .hpn-title{font-family:var(--font-varsity);font-size:18px;font-weight:800;color:var(--success);letter-spacing:2px;text-transform:uppercase;}.hall-pass-notif .hpn-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+.layer-badge{display:inline-block;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;border-radius:12px;margin-bottom:10px;}.layer-badge.l1{color:var(--amber);background:rgba(244,162,97,.1);border:1px solid rgba(244,162,97,.2);}.layer-badge.l2{color:var(--teal);background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);}
+.s-hint-box{margin:12px 0;padding:12px 14px;background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.15);border-radius:10px;animation:fadeUp .5s;}.s-hint-box .shb-label{font-family:var(--font-mono);font-size:9px;letter-spacing:3px;color:var(--teal);text-transform:uppercase;margin-bottom:4px;}.s-hint-box .shb-text{font-size:14px;color:var(--cream);line-height:1.6;font-style:italic;}
+#teacher{background:var(--navy-deep);}.t-header{text-align:center;padding:16px;border-bottom:1px solid rgba(244,162,97,.1);flex-shrink:0;}.t-header h2{font-family:var(--font-varsity);font-size:20px;font-weight:900;color:var(--coral);letter-spacing:4px;text-transform:uppercase;}.t-body{flex:1;overflow-y:auto;padding:16px;}
+.t-current{text-align:center;padding:20px;background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:16px;}.t-current .curr-label{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}.t-current .curr-name{font-family:var(--font-varsity);font-size:24px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:3px;}
+.t-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}.t-stat{background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;text-align:center;}.t-stat .num{font-family:var(--font-varsity);font-size:28px;font-weight:900;color:var(--coral);}.t-stat .lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-top:2px;}
 .t-nav{display:flex;gap:10px;margin-bottom:16px;}.t-nav .btn{flex:1;margin-top:0;font-size:14px;}
-.t-phases{margin-bottom:16px;}
-.t-phase-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:4px;cursor:pointer;transition:background .2s;}
-.t-phase-item:hover{background:rgba(255,255,255,.03);}
-.t-phase-item.current{background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.12);}
-.t-phase-item .dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0;}
-.t-phase-item.current .dot{background:var(--coral);box-shadow:0 0 8px rgba(230,57,70,.4);}
-.t-phase-item.completed .dot{background:var(--success);}
-.t-phase-item .pi-name{font-size:14px;font-weight:600;color:var(--cream);}
-.t-phase-item.current .pi-name{color:var(--coral);}
-.t-phase-item .pi-desc{font-size:11px;color:var(--muted);}
-.t-section{margin-bottom:16px;padding:14px;background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:10px;}
-.t-section-title{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:8px;}
-.t-team-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;}
-.t-team-row:last-child{border-bottom:none;}
-.t-team-row .ttr-name{color:var(--cream);flex:1;white-space:nowrap;}
-.t-team-row .ttr-code{font-family:var(--font-mono);font-size:11px;color:var(--coral);font-weight:700;}
-.t-team-row .ttr-status{font-family:var(--font-mono);font-size:10px;color:var(--muted);}
-.t-hint-btn{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;padding:6px 12px;border-radius:6px;border:1px solid rgba(14,165,233,.4);background:rgba(14,165,233,.1);color:var(--teal);cursor:pointer;white-space:nowrap;transition:all .2s;font-weight:700;}
-.t-hint-btn:hover{background:rgba(14,165,233,.2);border-color:var(--teal);}
-.t-hint-btn.used{opacity:.3;pointer-events:none;}
+.t-phases{margin-bottom:16px;}.t-phase-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:4px;cursor:pointer;transition:background .2s;}.t-phase-item:hover{background:rgba(255,255,255,.03);}.t-phase-item.current{background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.12);}.t-phase-item .dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0;}.t-phase-item.current .dot{background:var(--coral);box-shadow:0 0 8px rgba(230,57,70,.4);}.t-phase-item.completed .dot{background:var(--success);}.t-phase-item .pi-name{font-size:14px;font-weight:600;color:var(--cream);}.t-phase-item.current .pi-name{color:var(--coral);}.t-phase-item .pi-desc{font-size:11px;color:var(--muted);}
+.t-section{margin-bottom:16px;padding:14px;background:linear-gradient(145deg,var(--navy-light),rgba(30,42,74,0.4));border:1px solid rgba(255,255,255,.06);border-radius:10px;}.t-section-title{font-family:var(--font-mono);font-size:10px;letter-spacing:3px;color:var(--amber);text-transform:uppercase;margin-bottom:8px;}
+.t-team-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;}.t-team-row:last-child{border-bottom:none;}.t-team-row .ttr-name{color:var(--cream);flex:1;white-space:nowrap;}.t-team-row .ttr-status{font-family:var(--font-mono);font-size:10px;color:var(--muted);}
+.t-hint-btn{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;padding:6px 12px;border-radius:6px;border:1px solid rgba(14,165,233,.4);background:rgba(14,165,233,.1);color:var(--teal);cursor:pointer;white-space:nowrap;transition:all .2s;font-weight:700;}.t-hint-btn:hover{background:rgba(14,165,233,.2);border-color:var(--teal);}.t-hint-btn.used{opacity:.3;pointer-events:none;}
 .btn-danger{background:transparent;border:1px solid #c0392b;color:#c0392b;font-size:12px;}.btn-danger:hover{background:rgba(192,57,43,.1);}
-.t-timer-config{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
-.t-timer-config input{width:60px;text-align:center;}.t-timer-config span{font-size:12px;color:var(--muted);}
+.t-timer-config{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}.t-timer-config input{width:60px;text-align:center;}.t-timer-config span{font-size:12px;color:var(--muted);}
 @media(max-width:768px){.welcome-layout{flex-direction:column;gap:24px;padding:16px;}.welcome-right{width:100%;max-height:35vh;}.qr-wrap img{width:150px;height:150px;}.ub-teams{grid-template-columns:repeat(3,1fr);}}
 </style>
 </head>
 <body>
 <canvas class="fx-canvas" id="fx-canvas"></canvas>
 <div class="screen-flash" id="screen-flash"></div>
+<div class="rings-layer" id="rings-layer"></div>
 <div class="finale-glow" id="finale-glow"></div>
+<div class="team-banner" id="team-banner"></div>
 <div class="d-hint-flash" id="d-hint-flash"><div class="dhf-team" id="dhf-team"></div><div class="dhf-text" id="dhf-text"></div></div>
 
-<!-- DISPLAY -->
 <div id="display" class="mode">
     <div id="d-lobby" class="phase"><div class="welcome-layout"><div class="welcome-left"><div class="title">Wildcat<br>Legacy</div><div class="sub">Escape Room · 2026</div><div class="scan">Scan to join</div><div class="qr-wrap"><img id="qr-code" src="" alt="QR"></div></div><div class="welcome-right"><div class="join-count">WILDCATS: <span id="d-player-count">0</span></div><div id="d-join-list"></div></div></div></div>
     <div id="d-video" class="phase"><iframe id="video-iframe" class="video-frame" src="about:blank" allow="autoplay"></iframe></div>
     <div id="d-assign" class="phase"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;"><div style="font-family:var(--font-mono);font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">Clique Assignment</div><div style="font-family:var(--font-varsity);font-size:clamp(28px,5vw,52px);font-weight:900;text-transform:uppercase;letter-spacing:4px;">Check Your Phone!</div><div style="color:var(--muted);font-size:15px;margin-top:16px;font-style:italic;">Find your team · Head to your station</div></div></div>
     <div id="d-puzzles" class="phase"><div class="d-header"><div class="phase-tag">The Board</div></div><div class="d-body"><div class="unity-board"><div class="ub-timer" id="d-timer">28:00</div><div class="ub-letters" id="d-letter-slots"></div><div class="ub-teams" id="d-team-cards"></div></div></div></div>
     <div id="d-converge" class="phase"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;"><div style="font-family:var(--font-mono);font-size:13px;letter-spacing:5px;color:var(--coral);text-transform:uppercase;margin-bottom:20px;">All Letters Found</div><div style="font-family:var(--font-varsity);font-size:clamp(24px,4vw,44px);font-weight:900;text-transform:uppercase;letter-spacing:4px;margin-bottom:24px;">Decode the Word Together</div><div class="converge-symbols" id="d-symbols"></div><div style="color:var(--muted);font-size:15px;margin-top:20px;font-style:italic;">Every team holds one piece. Find each other.</div></div></div>
-    <div id="d-finale" class="phase"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;"><div id="d-finale-word" style="font-family:var(--font-varsity);font-size:clamp(48px,10vw,120px);font-weight:900;text-transform:uppercase;letter-spacing:8px;color:var(--coral);text-shadow:0 0 60px rgba(230,57,70,.4);">UNITY</div><div style="font-family:var(--font-mono);font-size:16px;letter-spacing:5px;color:var(--amber);margin-top:16px;text-transform:uppercase;">The locker is open</div></div></div>
+    <div id="d-finale" class="phase"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;"><div style="font-family:var(--font-varsity);font-size:clamp(48px,10vw,120px);font-weight:900;text-transform:uppercase;letter-spacing:8px;color:var(--coral);text-shadow:0 0 60px rgba(230,57,70,.4);">UNITY</div><div style="font-family:var(--font-mono);font-size:16px;letter-spacing:5px;color:var(--amber);margin-top:16px;text-transform:uppercase;">The locker is open</div></div></div>
     <div id="d-legacy" class="phase"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;"><div style="font-size:48px;margin-bottom:16px;">🐾</div><div style="font-family:var(--font-display);font-size:clamp(28px,5vw,52px);color:var(--coral);text-shadow:0 0 40px rgba(230,57,70,.3);">Welcome to<br>the Legacy</div><div style="color:var(--muted);font-size:15px;margin-top:20px;font-style:italic;">Choose your scripture · Claim your tag</div></div></div>
 </div>
-<!-- STUDENT -->
 <div id="student" class="mode">
     <div id="s-lobby" class="phase"><div class="s-header"><div class="chip">Join</div><h2>Wildcat Legacy</h2></div><div class="s-body"><div id="s-login-form"><div class="prompt">What's your first name, Wildcat?</div><input type="text" class="input" id="s-name" placeholder="Your first name" autocomplete="off" style="text-transform:none;text-align:left;font-family:var(--font-serif);letter-spacing:0;"><div class="check-row"><input type="checkbox" id="s-partner-check"><label for="s-partner-check">I'm sharing this phone with a partner</label></div><div id="s-partner-field" style="display:none;margin-top:12px;"><input type="text" class="input" id="s-partner-name" placeholder="Partner's first name" autocomplete="off" style="text-transform:none;text-align:left;font-family:var(--font-serif);letter-spacing:0;"></div><button class="btn btn-coral" id="s-join-btn">Enter the Class</button></div><div id="s-login-done" style="display:none;"><div class="confirm"><span class="big">🐾</span>You're in!<div class="sub">Watch the screen up front.</div></div></div></div></div>
     <div id="s-video" class="phase"><div class="s-header"><div class="chip">📼 Transmission</div><h2>Watch the Screen</h2></div><div class="s-body"><div class="waiting"><span class="icon">📺</span>A transmission is playing up front.<div style="font-size:13px;color:var(--muted);margin-top:6px;">Your mission begins soon.</div></div></div></div>
@@ -197,7 +111,6 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     <div id="s-finale" class="phase"><div class="s-body"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;"><div style="font-size:56px;margin-bottom:16px;animation:popIn .5s;">🎉</div><div style="font-family:var(--font-varsity);font-size:40px;font-weight:900;color:var(--coral);text-transform:uppercase;letter-spacing:6px;">UNITY!</div><div style="color:var(--muted);font-size:16px;margin-top:16px;font-style:italic;">The locker is open.</div></div></div></div>
     <div id="s-legacy" class="phase"><div class="s-header"><div class="chip">Your Legacy</div><h2>Choose Your Scripture</h2></div><div class="s-body"><div style="text-align:center;padding:24px;"><div style="font-size:40px;margin-bottom:14px;">📖</div><div style="color:var(--cream);font-size:16px;line-height:1.7;">Come forward and choose the scripture card that speaks to you.</div><div style="color:var(--muted);font-size:14px;margin-top:14px;font-style:italic;line-height:1.6;">Write your name on it. Slide it into your luggage tag. This is yours — your legacy.</div></div></div></div>
 </div>
-<!-- TEACHER -->
 <div id="teacher" class="mode">
     <div class="t-header"><h2>🐾 Gamemaster</h2></div>
     <div class="t-body">
@@ -216,91 +129,60 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 <script>
 var IS_DEMO=typeof firebase==='undefined';var db=null;
 if(!IS_DEMO){firebase.initializeApp({apiKey:"AIzaSyAa-V12j-ASGLqpcDU4MN-20uTzsxMh6sk",authDomain:"church-lessons-24392.firebaseapp.com",projectId:"church-lessons-24392",storageBucket:"church-lessons-24392.firebasestorage.app",messagingSenderId:"122319599653",appId:"1:122319599653:web:7719cd478da5d40b59a7cc"});db=firebase.firestore();}
-
 var PHASES=['lobby','video','assign','puzzles','converge','finale','legacy'];
-var PHASE_META={lobby:{name:'Lobby',desc:'Girls joining'},video:{name:'Video',desc:'Cinematic transmission'},assign:{name:'Assign',desc:'Clique reveal'},puzzles:{name:'Puzzles',desc:'Escape room active'},converge:{name:'Converge',desc:'Decode the word'},finale:{name:'Finale',desc:'What team? Wildcats!'},legacy:{name:'Legacy',desc:'Scripture + luggage tag'}};
-var CLIQUES=[
-    {name:'Jocks',emoji:'🏀',station:'The Locker Room',letter:'U',mission:'Your strength lifts others. Lead with action.',passTo:1,passToName:'Brainiacs'},
-    {name:'Brainiacs',emoji:'🧪',station:'The Lab',letter:'N',mission:'Your mind sees what others miss. Light the way.',passTo:2,passToName:'Drama'},
-    {name:'Drama',emoji:'🎭',station:'The Stage',letter:'I',mission:'Your voice gives words to what others feel. Speak truth.',passTo:3,passToName:'Skaters'},
-    {name:'Skaters',emoji:'🎨',station:'The Mural',letter:'T',mission:'Your creativity builds what didn\'t exist before. Create.',passTo:4,passToName:'Sharpay'},
-    {name:'Sharpay',emoji:'⭐',station:'The Audition',letter:'Y',mission:'Your sparkle draws people together. Shine.',passTo:0,passToName:'Jocks'},
-];
-var PUZZLE_CONTENT={
-    0:{l1Title:'The Jersey Decoder',l1Desc:'Five sports jerseys hang on the clothesline. Each has a number on the front and a word on the back.',l1Steps:'Arrange the jerseys in numerical order. Read the back words in order — they form a scripture.',l1Scripture:'"The eye cannot say unto the hand, I have no need of thee: nor again the head to the feet, I have no need of you."',l1Ref:'Where is this verse found? Enter the book, chapter, and verse as digits.',l1Placeholder:'Book Chapter Verse (digits only)',l2Title:'The Playbook',l2Desc:'You received a Hall Pass from Sharpay\'s team — a torn playbill page with 5 highlighted names.',l2Steps:'Your phone shows a playbook grid with 5 plays. Match the highlighted names to the correct plays. The correct order reveals a word.',l2Placeholder:'Enter the word...'},
-    1:{l1Title:'The Cipher Lab',l1Desc:'A lab report sits on your table. It contains a number cipher where A=1, B=2, C=3, and so on.',l1Steps:'Decode the full message. It\'s a scripture about the body of Christ.',l1Scripture:'"For as the body is one, and hath many members, and all the members of that one body, being many, are one body: so also is Christ."',l1Ref:'What verse is this? Enter the book, chapter, and verse as digits.',l1Placeholder:'Book Chapter Verse (digits only)',l2Title:'UV Revelation',l2Desc:'You received a Hall Pass from the Jocks — a card that says "Shine the light." There\'s a UV blacklight at your station.',l2Steps:'Shine the blacklight on the card. A hidden word will be revealed. Enter that word.',l2Placeholder:'Enter the hidden word...'},
-    2:{l1Title:'The Missing Lyrics',l1Desc:'Three printed lyric sheets sit at your station — from "Breaking Free," "We\'re All in This Together," and "Start of Something New."',l1Steps:'Eight words have been blanked out. Fill in the missing words. Take the first letter of each missing word, in order.',l1Scripture:null,l1Ref:'The first letters spell an 8-letter word. Enter it.',l1Placeholder:'8-letter word',l2Title:'The Director\'s Notes',l2Desc:'You received a Hall Pass from the Brainiacs — a card with three HSM song titles and circled words.',l2Steps:'Your phone shows "Director\'s Notes" — a script with blanks. The circled words fill the blanks. Read the first letter of each completed line.',l2Placeholder:'Enter the 5-letter code...'},
-    3:{l1Title:'The Shattered Mural',l1Desc:'A Wildcat crest has been shattered into about 20 puzzle pieces. One corner is missing — it arrives via the Drama team\'s Hall Pass.',l1Steps:'Assemble the mural without the missing piece. Read the text woven into the edge.',l1Scripture:'"Be one; and if ye are not one ye are not mine."',l1Ref:'What reference is this? Enter book and verse as a code.',l1Placeholder:'Book + numbers (e.g., DC3827)',l2Title:'The Hidden Mark',l2Desc:'The Drama team delivered the missing corner piece. When placed, it completes a QR code hidden in the mural.',l2Steps:'Place the final piece. Scan the completed QR code — it opens a riddle. The answer is a word about your divine identity.',l2Placeholder:'Enter the riddle answer...'},
-    4:{l1Title:'The Cast Sorting',l1Desc:'An "Audition Playbill" lists 12 fictional cast members, each with a bio describing a spiritual gift. Eight gift cards list gifts from 1 Corinthians 12 and Moroni 10.',l1Steps:'Match each cast member to their spiritual gift. Then take the first letter of each cast member\'s name, in the order of the gifts as listed on the cards.',l1Scripture:null,l1Ref:'The first letters spell an 8-letter word. Enter it.',l1Placeholder:'8-letter word',l2Title:'The Standing Ovation',l2Desc:'You received a Hall Pass from the Skaters — an incorrectly sorted cast list.',l2Steps:'Using the Skaters\' version as a key, re-sort into the correct order. The sorted names reveal: "Ye are the light of the world." Enter the scripture reference as a code.',l2Scripture:'"Ye are the light of the world. A city that is set on an hill cannot be hid."',l2Placeholder:'Book + chapter + verse (e.g., MATT514)'},
-};
-var HINTS={
-    0:{l1:['Look at the jersey numbers — what order do they go in?','Read the back of each jersey, left to right, in numerical order. It\'s a verse from 1 Corinthians.','The answer is 1 Corinthians 12:21. Compress: 1 + 12 + 21 = 11221'],l2:['Match each highlighted name to the play where that character appears.','The first letter of each play name, in matched order, spells the answer.','The answer is ALLIN.']},
-    1:{l1:['Start decoding: A=1, B=2, C=3... Write out each letter.','The decoded message is about the body having many members. It\'s from 1 Corinthians 12.','The answer is 1 Corinthians 12:12. Compress: 1 + 12 + 12 = 11212'],l2:['The card says "Shine the light." Look for a UV blacklight at your station.','Hold the blacklight directly over the card. Move slowly — the hidden code will glow.','The hidden word is SHINE.']},
-    2:{l1:['Think about the missing words from each song. Hum the melody if it helps!','Take the FIRST LETTER of each missing word, in order across all three songs.','The letters spell O-P-E-N-W-I-D-E.'],l2:['The circled words from the Brainiacs\' card fill blanks in the Director\'s Notes.','After filling in all blanks, read the FIRST LETTER of each completed line.','The first letters spell G-R-A-C-E.']},
-    3:{l1:['Assemble the puzzle. Look for text running along the edges of the image.','The edge text is a quote about being one. It\'s from the Doctrine & Covenants.','The answer is D&C 38:27. Enter as DC3827.'],l2:['Place the corner piece from Drama. Look for a QR code pattern in the completed mural.','Scan the QR code with any phone camera. It opens a riddle about your identity.','The riddle answer is BELOVED.']},
-    4:{l1:['Read each cast member\'s bio carefully — each describes a specific spiritual gift.','Match all 8 cast members to their gifts. Then read the first letter of each name in gift-card order.','The first letters spell T-O-G-E-T-H-E-R.'],l2:['Compare the Skaters\' sorted list to your scrambled one. Re-sort yours to match.','The correctly sorted list reveals a verse: "Ye are the light of the world." Where is that found?','The answer is Matthew 5:14. Enter as MATT514.']},
-};
+var PHASE_META={lobby:{name:'Lobby',desc:'Girls joining'},video:{name:'Video',desc:'Cinematic'},assign:{name:'Assign',desc:'Clique reveal'},puzzles:{name:'Puzzles',desc:'Escape room active'},converge:{name:'Converge',desc:'Decode the word'},finale:{name:'Finale',desc:'What team? Wildcats!'},legacy:{name:'Legacy',desc:'Scripture + tag'}};
+var CLIQUES=[{name:'Jocks',emoji:'🏀',station:'The Locker Room',letter:'U',mission:'Your strength lifts others. Lead with action.',passTo:1},{name:'Brainiacs',emoji:'🧪',station:'The Lab',letter:'N',mission:'Your mind sees what others miss. Light the way.',passTo:2},{name:'Drama',emoji:'🎭',station:'The Stage',letter:'I',mission:'Your voice gives words to what others feel. Speak truth.',passTo:3},{name:'Skaters',emoji:'🎨',station:'The Mural',letter:'T',mission:'Your creativity builds what didn\'t exist before. Create.',passTo:4},{name:'Sharpay',emoji:'⭐',station:'The Audition',letter:'Y',mission:'Your sparkle draws people together. Shine.',passTo:0}];
+var PC={0:{l1T:'The Jersey Decoder',l1D:'Five sports jerseys hang on the clothesline. Each has a number on the front and a word on the back.',l1S:'Arrange the jerseys in numerical order. Read the back words in order — they form a scripture.',l1Sc:'"The eye cannot say unto the hand, I have no need of thee: nor again the head to the feet, I have no need of you."',l1R:'Where is this verse found? Enter the book, chapter, and verse as digits.',l1P:'Book Chapter Verse (digits only)',l2T:'The Playbook',l2D:'You received a Hall Pass from Sharpay\'s team — a torn playbill page with 5 highlighted names.',l2S:'Match the highlighted names to the correct plays. The correct order reveals a word.',l2P:'Enter the word...'},1:{l1T:'The Cipher Lab',l1D:'A lab report sits on your table. It contains a number cipher where A=1, B=2, C=3...',l1S:'Decode the full message. It\'s a scripture about the body of Christ.',l1Sc:'"For as the body is one, and hath many members, and all the members of that one body, being many, are one body: so also is Christ."',l1R:'What verse is this? Enter the book, chapter, and verse as digits.',l1P:'Book Chapter Verse (digits only)',l2T:'UV Revelation',l2D:'You received a Hall Pass from the Jocks — a card that says "Shine the light." There\'s a UV blacklight at your station.',l2S:'Shine the blacklight on the card. A hidden word will be revealed.',l2P:'Enter the hidden word...'},2:{l1T:'The Missing Lyrics',l1D:'Three lyric sheets: "Breaking Free," "We\'re All in This Together," and "Start of Something New."',l1S:'Eight words have been blanked out. Fill them in. Take the first letter of each missing word, in order.',l1Sc:null,l1R:'The first letters spell an 8-letter word. Enter it.',l1P:'8-letter word',l2T:'The Director\'s Notes',l2D:'You received a Hall Pass from the Brainiacs — a card with circled words from 3 song titles.',l2S:'Fill the blanks in the Director\'s Notes with the circled words. Read the first letter of each completed line.',l2P:'Enter the 5-letter code...'},3:{l1T:'The Shattered Mural',l1D:'A Wildcat crest has been shattered into ~20 pieces. One corner is missing — it arrives via Drama\'s Hall Pass.',l1S:'Assemble the mural. Read the text woven into the edge.',l1Sc:'"Be one; and if ye are not one ye are not mine."',l1R:'What reference is this? Enter book and verse as a code.',l1P:'Book + numbers (e.g., DC3827)',l2T:'The Hidden Mark',l2D:'Drama delivered the missing corner. It completes a QR code in the mural.',l2S:'Scan the QR code — it opens a riddle about your divine identity.',l2P:'Enter the riddle answer...'},4:{l1T:'The Cast Sorting',l1D:'An "Audition Playbill" lists cast members with bios describing spiritual gifts. Eight gift cards list gifts from scripture.',l1S:'Match each cast member to their gift. Take the first letter of each name, in gift-card order.',l1Sc:null,l1R:'The first letters spell an 8-letter word. Enter it.',l1P:'8-letter word',l2T:'The Standing Ovation',l2D:'You received a Hall Pass from the Skaters — an incorrectly sorted cast list.',l2S:'Re-sort into the correct order. The names reveal: "Ye are the light of the world." Enter the scripture reference.',l2Sc:'"Ye are the light of the world. A city that is set on an hill cannot be hid."',l2P:'Book + chapter + verse (e.g., MATT514)'}};
+var HINTS={0:{l1:['Look at the jersey numbers — what order do they go in?','Read the backs in numerical order. It\'s from 1 Corinthians.','1 Corinthians 12:21 → compress: 1+12+21 = 11221'],l2:['Match each name to its play.','First letter of each play name spells the answer.','The answer is ALLIN.']},1:{l1:['Start decoding: A=1, B=2, C=3...','It\'s about the body having many members. 1 Corinthians 12.','1 Corinthians 12:12 → 11212'],l2:['Look for a UV blacklight at your station.','Hold the blacklight over the card slowly.','The word is SHINE.']},2:{l1:['Think about the missing words. Hum the melody!','Take the FIRST LETTER of each missing word, in order.','O-P-E-N-W-I-D-E'],l2:['The circled words fill blanks in the Director\'s Notes.','Read the FIRST LETTER of each completed line.','G-R-A-C-E']},3:{l1:['Assemble the puzzle. Look for text on the edges.','It\'s about being one. Doctrine & Covenants.','D&C 38:27 → DC3827'],l2:['Place the corner piece. Look for a QR code.','Scan the QR code. It opens a riddle about identity.','The answer is BELOVED.']},4:{l1:['Read each bio — each describes a spiritual gift.','Match names to gifts. Read first letters in gift-card order.','T-O-G-E-T-H-E-R'],l2:['Re-sort your list to match the Skaters\' version.','The verse is "Ye are the light of the world." Where is that?','Matthew 5:14 → MATT514']}};
 var SYMBOLS=['🏀','🧪','🎭','🎨','⭐'];
 var CODE_POOL=['BREAK FREE','HEAD IN','START NEW','BOP TOP','GO WILDCATS','SUMMER TIME','BET ON IT','SCREAM OUT','RIGHT NOW','FABULOUS','WORK IT','NOW NEVER','EVERYDAY','WHAT TIME','ALL STAR'];
-var L1_ANSWERS={0:'11221',1:'11212',2:'OPENWIDE',3:'DC3827',4:'TOGETHER'};
-var L2_ANSWERS={0:'ALLIN',1:'SHINE',2:'GRACE',3:'BELOVED',4:'MATT514'};
-
+var L1A={0:'11221',1:'11212',2:'OPENWIDE',3:'DC3827',4:'TOGETHER'};
+var L2A={0:'ALLIN',1:'SHINE',2:'GRACE',3:'BELOVED',4:'MATT514'};
 var currentMode='student',currentPhase='lobby',myTeamIndex=-1,myName='',timerInterval=null;
 var wrongCount={l1:0,l2:0},lockoutTimer={l1:null,l2:null},scriptureTimer=null;
-var slotOrder=[0,1,2,3,4]; // scrambled per session
+var slotOrder=[3,0,4,1,2];
 var prevFoundState={};
 try{myName=localStorage.getItem('wl-name')||'';myTeamIndex=parseInt(localStorage.getItem('wl-team'));if(isNaN(myTeamIndex))myTeamIndex=-1;}catch(e){}
 
-/* === FX ENGINE === */
+/* FX ENGINE */
 var fxc=document.getElementById('fx-canvas'),fxctx=fxc.getContext('2d');
 fxc.width=window.innerWidth;fxc.height=window.innerHeight;
-var particles=[],fxActive=false;
-var COLORS=['#E63946','#FF4D5E','#F4A261','#FFB627','#FFF5E1','#22C55E','#0EA5E9'];
-function spawnConfetti(count){for(var i=0;i<count;i++){particles.push({type:'confetti',x:Math.random()*fxc.width,y:-20-Math.random()*100,w:Math.random()*10+5,h:Math.random()*7+3,dx:(Math.random()-0.5)*5,dy:Math.random()*4+2,rot:Math.random()*360,drot:(Math.random()-0.5)*10,color:COLORS[Math.floor(Math.random()*COLORS.length)],life:400+Math.random()*200,gravity:0.08});}if(!fxActive){fxActive=true;drawFx();}}
-function spawnEmbers(count){for(var i=0;i<count;i++){var cx=fxc.width/2+(Math.random()-0.5)*fxc.width*0.8;particles.push({type:'ember',x:cx,y:fxc.height+Math.random()*40,r:Math.random()*3+1,dx:(Math.random()-0.5)*0.5,dy:-(Math.random()*1.5+0.6),o:Math.random()*0.7+0.3,life:350,trail:[]});}if(!fxActive){fxActive=true;drawFx();}}
-function fireScreenFlash(){var el=document.getElementById('screen-flash');el.style.background='radial-gradient(ellipse at center,rgba(255,182,39,.35),rgba(230,57,70,.15),transparent 70%)';el.style.animation='none';void el.offsetWidth;el.style.animation='screenFlash .7s ease-out';}
-function drawFx(){
-    fxctx.clearRect(0,0,fxc.width,fxc.height);
-    for(var i=particles.length-1;i>=0;i--){
-        var p=particles[i];
-        if(p.type==='confetti'){
-            fxctx.save();fxctx.translate(p.x,p.y);fxctx.rotate(p.rot*Math.PI/180);
-            fxctx.fillStyle=p.color;fxctx.globalAlpha=Math.min(1,p.life/80);
-            fxctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);fxctx.restore();
-            p.x+=p.dx;p.y+=p.dy;p.dy+=p.gravity;p.rot+=p.drot;p.life--;p.dx*=0.99;
-        } else if(p.type==='ember'){
-            p.trail.push({x:p.x,y:p.y,o:p.o*0.2,r:p.r*0.4});
-            if(p.trail.length>12)p.trail.shift();
-            for(var j=0;j<p.trail.length;j++){var t=p.trail[j];fxctx.beginPath();fxctx.arc(t.x,t.y,t.r,0,Math.PI*2);fxctx.fillStyle='rgba(255,162,39,'+t.o+')';fxctx.fill();t.o*=0.88;}
-            fxctx.beginPath();fxctx.arc(p.x,p.y,p.r,0,Math.PI*2);fxctx.fillStyle='rgba(255,182,39,'+p.o+')';fxctx.fill();
-            if(p.o>0.2){fxctx.beginPath();fxctx.arc(p.x,p.y,p.r*4,0,Math.PI*2);fxctx.fillStyle='rgba(255,182,39,'+(p.o*0.08)+')';fxctx.fill();}
-            p.x+=p.dx;p.y+=p.dy;p.life--;p.o-=0.0018;
-        }
-        if(p.life<=0||p.o<=0||p.y>fxc.height+60||p.y<-60)particles.splice(i,1);
-    }
-    if(particles.length>0)requestAnimationFrame(drawFx);
-    else{fxActive=false;fxctx.clearRect(0,0,fxc.width,fxc.height);}
+var parts=[],fxActive=false;
+var COLS=['#E63946','#FF4D5E','#F4A261','#FFB627','#FFF5E1','#22C55E','#0EA5E9','#A78BFA'];
+function spawnP(type,count,opts){opts=opts||{};for(var i=0;i<count;i++){if(type==='c'){parts.push({t:'c',x:opts.cx!==undefined?opts.cx+(Math.random()-0.5)*200:Math.random()*fxc.width,y:opts.cy!==undefined?opts.cy-Math.random()*40:-20-Math.random()*80,w:Math.random()*12+5,h:Math.random()*8+3,dx:(Math.random()-0.5)*(opts.sp||6),dy:opts.cy!==undefined?(Math.random()-0.5)*8:Math.random()*5+2,rot:Math.random()*360,drot:(Math.random()-0.5)*12,col:COLS[Math.floor(Math.random()*COLS.length)],life:500,g:opts.g||0.1});}else if(type==='e'){var cx=opts.cx!==undefined?opts.cx+(Math.random()-0.5)*120:fxc.width/2+(Math.random()-0.5)*fxc.width*0.7;parts.push({t:'e',x:cx,y:opts.cy||fxc.height+20,r:Math.random()*4+1,dx:(Math.random()-0.5)*0.8,dy:-(Math.random()*2+0.8),o:Math.random()*0.8+0.3,life:400,trail:[]});}else if(type==='s'){var a=Math.random()*Math.PI*2;var sp=Math.random()*6+3;parts.push({t:'s',x:opts.cx||0,y:opts.cy||0,r:Math.random()*2.5+0.5,dx:Math.cos(a)*sp,dy:Math.sin(a)*sp,o:1,life:60,col:opts.col||'#FFB627'});}}if(!fxActive){fxActive=true;drawFx();}}
+function drawFx(){fxctx.clearRect(0,0,fxc.width,fxc.height);for(var i=parts.length-1;i>=0;i--){var p=parts[i];if(p.t==='c'){fxctx.save();fxctx.translate(p.x,p.y);fxctx.rotate(p.rot*Math.PI/180);fxctx.fillStyle=p.col;fxctx.globalAlpha=Math.min(1,p.life/100);fxctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);fxctx.restore();p.x+=p.dx;p.y+=p.dy;p.dy+=p.g;p.rot+=p.drot;p.life--;p.dx*=0.99;}else if(p.t==='e'){p.trail.push({x:p.x,y:p.y,o:p.o*0.2,r:p.r*0.4});if(p.trail.length>14)p.trail.shift();for(var j=0;j<p.trail.length;j++){var tt=p.trail[j];fxctx.beginPath();fxctx.arc(tt.x,tt.y,tt.r,0,Math.PI*2);fxctx.fillStyle='rgba(255,162,39,'+tt.o+')';fxctx.fill();tt.o*=0.88;}fxctx.beginPath();fxctx.arc(p.x,p.y,p.r,0,Math.PI*2);fxctx.fillStyle='rgba(255,182,39,'+p.o+')';fxctx.fill();if(p.o>0.2){fxctx.beginPath();fxctx.arc(p.x,p.y,p.r*5,0,Math.PI*2);fxctx.fillStyle='rgba(255,182,39,'+(p.o*0.06)+')';fxctx.fill();}p.x+=p.dx;p.y+=p.dy;p.life--;p.o-=0.002;}else if(p.t==='s'){fxctx.beginPath();fxctx.arc(p.x,p.y,p.r,0,Math.PI*2);fxctx.fillStyle=p.col;fxctx.globalAlpha=p.o;fxctx.fill();fxctx.globalAlpha=1;p.x+=p.dx;p.y+=p.dy;p.dx*=0.94;p.dy*=0.94;p.o-=0.016;p.life--;}if(p.life<=0||p.o<=0||p.y>fxc.height+80)parts.splice(i,1);}if(parts.length>0)requestAnimationFrame(drawFx);else{fxActive=false;fxctx.clearRect(0,0,fxc.width,fxc.height);}}
+function flashScreen(cx,cy){var el=document.getElementById('screen-flash');var x=cx||fxc.width/2,y=cy||fxc.height/3;el.style.background='radial-gradient(ellipse at '+x+'px '+y+'px, rgba(255,182,39,.4), rgba(230,57,70,.2), transparent 60%)';el.style.opacity='1';el.style.transition='none';setTimeout(function(){el.style.transition='opacity .7s ease-out';el.style.opacity='0';},30);}
+function pulseRings(cx,cy){var c=document.getElementById('rings-layer');for(var i=0;i<3;i++){(function(d){setTimeout(function(){var r=document.createElement('div');r.style.cssText='position:absolute;left:'+(cx-5)+'px;top:'+(cy-5)+'px;width:10px;height:10px;border-radius:50%;border:2px solid #FFB627;opacity:.6;pointer-events:none;';c.appendChild(r);var sz=10,op=0.6;var iv=setInterval(function(){sz+=8;op-=0.015;r.style.width=sz+'px';r.style.height=sz+'px';r.style.left=(cx-sz/2)+'px';r.style.top=(cy-sz/2)+'px';r.style.opacity=op;if(op<=0){clearInterval(iv);r.remove();}},20);},d*250);})(i);}}
+function showBanner(text){var b=document.getElementById('team-banner');b.textContent=text;b.classList.add('show');setTimeout(function(){b.classList.remove('show');},4000);}
+function celebrateLetterOnDisplay(teamIdx){
+    var slot=document.getElementById('d-slot-'+teamIdx);if(!slot)return;
+    var r=slot.getBoundingClientRect();var cx=r.left+r.width/2;var cy=r.top+r.height/2;
+    flashScreen(cx,cy);pulseRings(cx,cy);
+    spawnP('s',60,{cx:cx,cy:cy});
+    spawnP('c',150,{cx:cx,cy:cy,sp:10,g:0.12});
+    spawnP('e',50,{cx:cx,cy:cy+80});
+    setTimeout(function(){spawnP('c',100);spawnP('e',30);},400);
+    setTimeout(function(){spawnP('c',80);},800);
+    showBanner(CLIQUES[teamIdx].emoji+' '+CLIQUES[teamIdx].name+' found their letter!');
+    slot.style.transform='scale(0)';setTimeout(function(){slot.style.transform='scale(1)';},100);
 }
-function celebrateLetterFound(){fireScreenFlash();spawnConfetti(150);spawnEmbers(40);setTimeout(function(){spawnConfetti(80);},400);}
-function celebrateFinale(){fireScreenFlash();spawnConfetti(300);spawnEmbers(80);setTimeout(function(){spawnConfetti(200);spawnEmbers(60);},500);setTimeout(function(){spawnConfetti(200);spawnEmbers(60);},1000);setTimeout(function(){spawnConfetti(150);},1500);document.getElementById('finale-glow').classList.add('show');}
-function celebrateStudentSolve(){spawnConfetti(80);spawnEmbers(20);}
+function celebrateFinale(){flashScreen();spawnP('c',300);spawnP('e',100);setTimeout(function(){flashScreen();spawnP('c',200);spawnP('e',60);},500);setTimeout(function(){spawnP('c',200);spawnP('e',60);},1000);setTimeout(function(){spawnP('c',150);},1500);document.getElementById('finale-glow').classList.add('show');}
+function celebrateStudent(){spawnP('c',80);spawnP('e',20);}
 window.addEventListener('resize',function(){fxc.width=window.innerWidth;fxc.height=window.innerHeight;});
 
-/* === CORE === */
+/* CORE */
 function detectMode(){var h=window.location.hash.replace('#','');return h==='display'?'display':h==='teacher'?'teacher':'student';}
 function activateMode(m){currentMode=m;document.querySelectorAll('.mode').forEach(function(e){e.classList.remove('active');});document.getElementById(m).classList.add('active');if(m==='display')generateQR();}
 function generateQR(){var u=window.location.href.split('#')[0];var i=document.getElementById('qr-code');if(i){i.src='https://api.qrserver.com/v1/create-qr-code/?size=250x250&data='+encodeURIComponent(u)+'&format=svg';i.onerror=function(){i.parentElement.innerHTML='<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#333;font-size:12px;">QR loads when deployed</div>';};}}
+function shuffleArray(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function showPhase(p){
-    currentPhase=p;
-    var prefix=currentMode==='display'?'d':currentMode==='teacher'?'t':'s';
-    var container=document.getElementById(currentMode);
-    container.querySelectorAll('.phase').forEach(function(e){e.classList.remove('active');});
-    var target=document.getElementById(prefix+'-'+p);
-    if(target)target.classList.add('active');
+    currentPhase=p;var prefix=currentMode==='display'?'d':currentMode==='teacher'?'t':'s';
+    var container=document.getElementById(currentMode);container.querySelectorAll('.phase').forEach(function(e){e.classList.remove('active');});
+    var target=document.getElementById(prefix+'-'+p);if(target)target.classList.add('active');
     if(currentMode==='teacher')updateTeacherUI();
-    if(currentMode==='display'&&p==='video'){document.getElementById('video-iframe').src='wildcat-cinematic.html';}
-    if(currentMode==='display'&&p!=='video'){document.getElementById('video-iframe').src='about:blank';}
-    if(currentMode==='display'&&p==='puzzles')renderUnityBoard();
+    if(currentMode==='display'&&p==='video')document.getElementById('video-iframe').src='wildcat-cinematic.html';
+    if(currentMode==='display'&&p!=='video')document.getElementById('video-iframe').src='about:blank';
+    if(currentMode==='display'&&p==='puzzles')renderBoard();
     if(currentMode==='student'&&p==='assign')renderAssignment();
     if(currentMode==='student'&&p==='puzzles')renderPuzzleUI();
     if(currentMode==='student'&&p==='converge')renderConverge();
@@ -312,176 +194,113 @@ function showPhase(p){
     var tc=document.getElementById('t-cheat-section');if(tc)tc.style.display=(p==='puzzles'||p==='converge')?'block':'none';
 }
 function setPhase(p){if(IS_DEMO){processState({currentPhase:p});return;}db.collection('wildcat-state').doc('config').set({currentPhase:p},{merge:true});}
-function nextPhase(){var i=PHASES.indexOf(currentPhase);if(i<PHASES.length-1){var next=PHASES[i+1];if(next==='assign')assignTeams();setPhase(next);}}
+function nextPhase(){var i=PHASES.indexOf(currentPhase);if(i<PHASES.length-1){var n=PHASES[i+1];if(n==='assign')assignTeams();setPhase(n);}}
 function prevPhase(){var i=PHASES.indexOf(currentPhase);if(i>0)setPhase(PHASES[i-1]);}
 function jumpToPhase(p){if(p==='assign')assignTeams();setPhase(p);}
-function processState(data){
-    currentPhase=data.currentPhase||'lobby';
-    if(data.slotOrder)slotOrder=data.slotOrder;
-    showPhase(currentPhase);
-}
-function generateCodeWords(){var pool=CODE_POOL.slice();var words=[];for(var i=0;i<5;i++){var idx=Math.floor(Math.random()*pool.length);words.push(pool.splice(idx,1)[0]);}return words;}
-function shuffleArray(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function processState(d){currentPhase=d.currentPhase||'lobby';if(d.slotOrder)slotOrder=d.slotOrder;showPhase(currentPhase);}
+function generateCodeWords(){var p=CODE_POOL.slice();var w=[];for(var i=0;i<5;i++){var x=Math.floor(Math.random()*p.length);w.push(p.splice(x,1)[0]);}return w;}
 function assignTeams(){
-    if(IS_DEMO)return;
-    var shuffled=shuffleArray([0,1,2,3,4]);
-    db.collection('wildcat-state').doc('config').set({slotOrder:shuffled},{merge:true});
-    slotOrder=shuffled;
+    if(IS_DEMO)return;var so=shuffleArray([0,1,2,3,4]);slotOrder=so;
+    db.collection('wildcat-state').doc('config').set({slotOrder:so},{merge:true});
     db.collection('wildcat-players').get().then(function(snap){
-        var players=[];snap.forEach(function(doc){players.push({id:doc.id,data:doc.data()});});
-        players.sort(function(){return Math.random()-.5;});
-        var codeWords=generateCodeWords();var batch=db.batch();
-        players.forEach(function(p,i){batch.update(db.collection('wildcat-players').doc(p.id),{teamIndex:i%5});});
-        for(var t=0;t<5;t++){batch.set(db.collection('wildcat-teams').doc('team-'+t),{cliqueIndex:t,codeWord:codeWords[t],layer1Done:false,layer2Done:false,letterFound:false,hallPassDelivered:false,hallPassReceived:false,hintLevel:0},{merge:true});}
-        batch.commit();
+        var pl=[];snap.forEach(function(d){pl.push({id:d.id,data:d.data()});});
+        pl.sort(function(){return Math.random()-.5;});var cw=generateCodeWords();var b=db.batch();
+        pl.forEach(function(p,i){b.update(db.collection('wildcat-players').doc(p.id),{teamIndex:i%5});});
+        for(var t=0;t<5;t++){b.set(db.collection('wildcat-teams').doc('team-'+t),{cliqueIndex:t,codeWord:cw[t],layer1Done:false,layer2Done:false,letterFound:false,hallPassDelivered:false,hallPassReceived:false,hintLevelL1:0,hintLevelL2:0},{merge:true});}
+        b.commit();
     });
 }
-
-/* === TEACHER === */
-function updateTeacherUI(){var m=PHASE_META[currentPhase];document.getElementById('t-phase-name').textContent=m.name;var list=document.getElementById('t-phase-list');list.innerHTML=PHASES.map(function(p){var pm=PHASE_META[p];var isCurr=p===currentPhase;var isDone=PHASES.indexOf(p)<PHASES.indexOf(currentPhase);return '<div class="t-phase-item '+(isCurr?'current':'')+' '+(isDone?'completed':'')+'" onclick="jumpToPhase(\''+p+'\')"><div class="dot"></div><div><div class="pi-name">'+pm.name+'</div><div class="pi-desc">'+pm.desc+'</div></div></div>';}).join('');}
-
-/* === TIMER === */
-function startTimer(){var min=parseInt(document.getElementById('t-timer-min').value)||28;var end=Date.now()+min*60*1000;if(!IS_DEMO)db.collection('wildcat-state').doc('config').set({timerEnd:end},{merge:true});runTimer(end);}
+function updateTeacherUI(){var m=PHASE_META[currentPhase];document.getElementById('t-phase-name').textContent=m.name;document.getElementById('t-phase-list').innerHTML=PHASES.map(function(p){var pm=PHASE_META[p];var c=p===currentPhase;var d=PHASES.indexOf(p)<PHASES.indexOf(currentPhase);return '<div class="t-phase-item '+(c?'current':'')+' '+(d?'completed':'')+'" onclick="jumpToPhase(\''+p+'\')"><div class="dot"></div><div><div class="pi-name">'+pm.name+'</div><div class="pi-desc">'+pm.desc+'</div></div></div>';}).join('');}
+function startTimer(){var m=parseInt(document.getElementById('t-timer-min').value)||28;var e=Date.now()+m*60*1000;if(!IS_DEMO)db.collection('wildcat-state').doc('config').set({timerEnd:e},{merge:true});runTimer(e);}
 function stopTimer(){if(timerInterval)clearInterval(timerInterval);if(!IS_DEMO)db.collection('wildcat-state').doc('config').set({timerEnd:null},{merge:true});}
-function resetTimer(){if(timerInterval)clearInterval(timerInterval);timerInterval=null;var min=document.getElementById('t-timer-min').value||'28';var str=min+':00';var dt=document.getElementById('d-timer');if(dt){dt.textContent=str;dt.classList.remove('warning');}var tt=document.getElementById('t-timer-display');if(tt)tt.textContent=str;if(!IS_DEMO)db.collection('wildcat-state').doc('config').set({timerEnd:null},{merge:true});}
-function runTimer(end){if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(function(){var left=Math.max(0,end-Date.now());var m=Math.floor(left/60000);var s=Math.floor((left%60000)/1000);var str=m+':'+(s<10?'0':'')+s;var el=document.getElementById('d-timer');if(el){el.textContent=str;el.classList.toggle('warning',left<120000&&left>0);}var te=document.getElementById('t-timer-display');if(te)te.textContent=str;if(left<=0)clearInterval(timerInterval);},500);}
+function resetTimer(){if(timerInterval)clearInterval(timerInterval);timerInterval=null;var m=document.getElementById('t-timer-min').value||'28';var s=m+':00';var d=document.getElementById('d-timer');if(d){d.textContent=s;d.classList.remove('warning');}var t=document.getElementById('t-timer-display');if(t)t.textContent=s;if(!IS_DEMO)db.collection('wildcat-state').doc('config').set({timerEnd:null},{merge:true});}
+function runTimer(end){if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(function(){var l=Math.max(0,end-Date.now());var m=Math.floor(l/60000);var s=Math.floor((l%60000)/1000);var str=m+':'+(s<10?'0':'')+s;var e=document.getElementById('d-timer');if(e){e.textContent=str;e.classList.toggle('warning',l<120000&&l>0);}var t=document.getElementById('t-timer-display');if(t)t.textContent=str;if(l<=0)clearInterval(timerInterval);},500);}
 
-/* === BOARD (scrambled) === */
-function renderUnityBoard(){var slots=document.getElementById('d-letter-slots');if(!slots)return;slots.innerHTML=slotOrder.map(function(ci){return '<div class="ub-slot" id="d-slot-'+ci+'">?</div>';}).join('');}
+/* BOARD */
+function renderBoard(){var s=document.getElementById('d-letter-slots');if(!s)return;s.innerHTML=slotOrder.map(function(ci){return '<div class="ub-slot" id="d-slot-'+ci+'">?</div>';}).join('');}
 function renderTeamCards(teams){
-    var container=document.getElementById('d-team-cards');if(!container)return;container.innerHTML='';
-    CLIQUES.forEach(function(c,i){var t=teams[i]||{};var status=t.letterFound?'LETTER FOUND':t.layer2Done?'Layer 2 done':t.layer1Done?'Layer 1 done':'Working...';var d=document.createElement('div');d.className='ub-team'+(t.letterFound?' done':'');d.innerHTML='<div class="team-emoji">'+c.emoji+'</div><div class="team-name">'+c.name+'</div><div class="team-status">'+status+'</div>';container.appendChild(d);});
-    CLIQUES.forEach(function(c,i){var slot=document.getElementById('d-slot-'+i);if(slot&&teams[i]&&teams[i].letterFound){if(!prevFoundState[i]){slot.classList.add('found');slot.textContent=c.letter;celebrateLetterFound();}else{slot.classList.add('found');slot.textContent=c.letter;}prevFoundState[i]=true;}});
-    var found=0;CLIQUES.forEach(function(c,i){if(teams[i]&&teams[i].letterFound)found++;});var tl=document.getElementById('t-letters');if(tl)tl.textContent=found;
+    var c=document.getElementById('d-team-cards');if(!c)return;c.innerHTML='';
+    CLIQUES.forEach(function(cl,i){var t=teams[i]||{};var st=t.letterFound?'LETTER FOUND':t.layer2Done?'L2 done':t.layer1Done?'L1 done':'Working...';var d=document.createElement('div');d.className='ub-team'+(t.letterFound?' done':'');d.innerHTML='<div class="team-emoji">'+cl.emoji+'</div><div class="team-name">'+cl.name+'</div><div class="team-status">'+st+'</div>';c.appendChild(d);});
+    CLIQUES.forEach(function(cl,i){var s=document.getElementById('d-slot-'+i);if(s&&teams[i]&&teams[i].letterFound){if(!prevFoundState[i]){s.classList.add('found');s.textContent=cl.letter;celebrateLetterOnDisplay(i);}else{s.classList.add('found');s.textContent=cl.letter;}prevFoundState[i]=true;}});
+    var f=0;CLIQUES.forEach(function(cl,i){if(teams[i]&&teams[i].letterFound)f++;});var tl=document.getElementById('t-letters');if(tl)tl.textContent=f;
 }
 function renderTeacherTeams(teams){
-    var container=document.getElementById('t-team-list');if(!container)return;container.innerHTML='';
-    CLIQUES.forEach(function(c,i){
-        var t=teams[i]||{};var hl=t.hintLevel||0;
-        var hintBtn=hl<3?'<button class="t-hint-btn" onclick="sendHint('+i+','+hl+')">Send Hint '+(hl+1)+'</button>':'<span class="t-hint-btn used">All sent</span>';
-        var d=document.createElement('div');d.className='t-team-row';
-        d.innerHTML='<span class="ttr-name">'+c.emoji+' '+c.name+'</span>'+hintBtn+'<span class="ttr-status">'+(t.letterFound?'✅':t.layer2Done?'L2 ✓':t.layer1Done?'L1 ✓':'...')+'</span>';
-        container.appendChild(d);
-    });
+    var c=document.getElementById('t-team-list');if(!c)return;c.innerHTML='';
+    CLIQUES.forEach(function(cl,i){var t=teams[i]||{};var isL1=!t.layer1Done;var hl=isL1?(t.hintLevelL1||0):(t.hintLevelL2||0);
+    var hb=hl<3?'<button class="t-hint-btn" onclick="sendHint('+i+')">Send Hint '+(hl+1)+'</button>':'<span class="t-hint-btn used">All sent</span>';
+    var d=document.createElement('div');d.className='t-team-row';d.innerHTML='<span class="ttr-name">'+cl.emoji+' '+cl.name+'</span>'+hb+'<span class="ttr-status">'+(t.letterFound?'✅':t.layer2Done?'L2 ✓':t.layer1Done?'L1 ✓':'...')+'</span>';c.appendChild(d);});
 }
-
-/* === HINTS === */
-function sendHint(teamIdx,level){
+/* HINTS */
+function sendHint(ti){
     if(IS_DEMO)return;
-    db.collection('wildcat-teams').doc('team-'+teamIdx).set({hintLevel:level+1},{merge:true});
-    var c=CLIQUES[teamIdx];
-    db.collection('wildcat-teams').doc('team-'+teamIdx).get().then(function(doc){
+    db.collection('wildcat-teams').doc('team-'+ti).get().then(function(doc){
         var d=doc.data();var isL1=!d.layer1Done;
-        var hintSet=isL1?HINTS[teamIdx].l1:HINTS[teamIdx].l2;
-        var hintText=hintSet[level]||'Keep going!';
-        flashHintOnDisplay(c.emoji+' '+c.name,hintText);
+        var field=isL1?'hintLevelL1':'hintLevelL2';
+        var hl=d[field]||0;if(hl>=3)return;
+        var upd={};upd[field]=hl+1;
+        db.collection('wildcat-teams').doc('team-'+ti).set(upd,{merge:true});
+        var hs=isL1?HINTS[ti].l1:HINTS[ti].l2;
+        flashHintOnDisplay(CLIQUES[ti].emoji+' '+CLIQUES[ti].name,hs[hl]||'Keep going!');
     });
 }
-function flashHintOnDisplay(team,text){var el=document.getElementById('d-hint-flash');document.getElementById('dhf-team').textContent='HINT \u2192 '+team;document.getElementById('dhf-text').textContent=text;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},8000);}
-function renderStudentHints(teamData){
-    if(myTeamIndex<0||!teamData)return;var hl=teamData.hintLevel||0;if(hl===0)return;
-    var isL1=!teamData.layer1Done;var hintSet=isL1?HINTS[myTeamIndex].l1:HINTS[myTeamIndex].l2;
-    var container=document.getElementById(isL1?'s-l1-hints':'s-l2-hints');if(!container)return;
-    container.innerHTML='';for(var i=0;i<hl&&i<hintSet.length;i++){container.innerHTML+='<div class="s-hint-box"><div class="shb-label">Hint '+(i+1)+'</div><div class="shb-text">'+esc(hintSet[i])+'</div></div>';}
+function flashHintOnDisplay(team,text){var e=document.getElementById('d-hint-flash');document.getElementById('dhf-team').textContent='HINT → '+team;document.getElementById('dhf-text').textContent=text;e.classList.add('show');setTimeout(function(){e.classList.remove('show');},8000);}
+function renderStudentHints(td){
+    if(myTeamIndex<0||!td)return;var isL1=!td.layer1Done;var hl=isL1?(td.hintLevelL1||0):(td.hintLevelL2||0);
+    var hs=isL1?HINTS[myTeamIndex].l1:HINTS[myTeamIndex].l2;
+    var cL1=document.getElementById('s-l1-hints'),cL2=document.getElementById('s-l2-hints');
+    if(cL1)cL1.innerHTML='';if(cL2)cL2.innerHTML='';
+    var target=isL1?cL1:cL2;if(!target||hl===0)return;
+    for(var i=0;i<hl&&i<hs.length;i++){target.innerHTML+='<div class="s-hint-box"><div class="shb-label">Hint '+(i+1)+'</div><div class="shb-text">'+esc(hs[i])+'</div></div>';}
 }
+/* LOCKOUT */
+function handleWrong(layer){wrongCount[layer]++;var w=document.getElementById('s-'+layer+'-wrong');w.style.display='block';setTimeout(function(){w.style.display='none';},2500);if(wrongCount[layer]>=3){wrongCount[layer]=0;var inp=document.getElementById('s-'+layer+'-input'),btn=document.getElementById('s-'+layer+'-submit'),lk=document.getElementById('s-'+layer+'-lockout');inp.classList.add('locked');btn.classList.add('locked');var s=10;lk.textContent='Locked — '+s+'s';lk.style.display='block';lockoutTimer[layer]=setInterval(function(){s--;lk.textContent='Locked — '+s+'s';if(s<=0){clearInterval(lockoutTimer[layer]);inp.classList.remove('locked');btn.classList.remove('locked');lk.style.display='none';}},1000);}}
 
-/* === LOCKOUT === */
-function handleWrongAnswer(layer){
-    wrongCount[layer]++;var wrongEl=document.getElementById('s-'+layer+'-wrong');wrongEl.style.display='block';setTimeout(function(){wrongEl.style.display='none';},2500);
-    if(wrongCount[layer]>=3){wrongCount[layer]=0;var input=document.getElementById('s-'+layer+'-input');var btn=document.getElementById('s-'+layer+'-submit');var lockEl=document.getElementById('s-'+layer+'-lockout');input.classList.add('locked');btn.classList.add('locked');var secs=10;lockEl.textContent='Locked \u2014 '+secs+'s';lockEl.style.display='block';lockoutTimer[layer]=setInterval(function(){secs--;lockEl.textContent='Locked \u2014 '+secs+'s';if(secs<=0){clearInterval(lockoutTimer[layer]);input.classList.remove('locked');btn.classList.remove('locked');lockEl.style.display='none';}},1000);}
-}
-
-/* === STUDENT RENDER === */
-function renderAssignment(){if(myTeamIndex<0)return;var c=CLIQUES[myTeamIndex];var el=document.getElementById('s-assign-content');if(el)el.innerHTML='<div class="emoji">'+c.emoji+'</div><div class="clique">'+c.name+'</div><div class="station">\u2192 '+c.station+'</div><div class="mission">'+c.mission+'</div>';}
+/* STUDENT RENDER */
+function renderAssignment(){if(myTeamIndex<0)return;var c=CLIQUES[myTeamIndex];document.getElementById('s-assign-content').innerHTML='<div class="emoji">'+c.emoji+'</div><div class="clique">'+c.name+'</div><div class="station">→ '+c.station+'</div><div class="mission">'+c.mission+'</div>';}
 function renderPuzzleUI(){
-    if(myTeamIndex<0)return;var c=CLIQUES[myTeamIndex];var p=PUZZLE_CONTENT[myTeamIndex];
+    if(myTeamIndex<0)return;var c=CLIQUES[myTeamIndex];var p=PC[myTeamIndex];
     document.getElementById('s-puzzle-chip').textContent=c.emoji+' '+c.name;
-    document.getElementById('s-puzzle-title').textContent=c.station;
-    document.getElementById('s-puzzle-ref').textContent=c.mission;
-    var l1='<div class="layer-badge l1">Layer 1 · Physical Puzzle</div><div class="puzzle-card"><div class="puzzle-label">Your Challenge</div><div class="puzzle-title">'+esc(p.l1Title)+'</div><div class="puzzle-desc">'+esc(p.l1Desc)+'</div><div class="puzzle-desc" style="color:var(--cream);">'+esc(p.l1Steps)+'</div>';
-    if(p.l1Scripture)l1+='<div id="s-l1-scripture" class="puzzle-scripture" style="display:none;">'+esc(p.l1Scripture)+'<span class="verse-ref">Identify this verse</span></div>';
-    l1+='</div><div class="puzzle-card" style="border-color:rgba(230,57,70,.15);"><div class="puzzle-label" style="color:var(--coral);">Answer</div><div class="puzzle-desc" style="font-size:13px;">'+esc(p.l1Ref)+'</div></div>';
-    document.getElementById('s-l1-content').innerHTML=l1;
-    document.getElementById('s-l1-input').placeholder=p.l1Placeholder||'Enter your answer...';
-    if(p.l1Scripture){if(scriptureTimer)clearTimeout(scriptureTimer);scriptureTimer=setTimeout(function(){var el=document.getElementById('s-l1-scripture');if(el){el.style.display='block';el.style.animation='fadeUp .8s ease';}},180000);}
-    var l2='<div class="layer-badge l2">Layer 2 · Digital Puzzle</div><div class="puzzle-card" style="border-color:rgba(14,165,233,.15);"><div class="puzzle-label" style="color:var(--teal);">Your Challenge</div><div class="puzzle-title">'+esc(p.l2Title)+'</div><div class="puzzle-desc">'+esc(p.l2Desc)+'</div><div class="puzzle-desc" style="color:var(--cream);">'+esc(p.l2Steps)+'</div>';
-    if(p.l2Scripture)l2+='<div class="puzzle-scripture">'+esc(p.l2Scripture)+'<span class="verse-ref">Identify this verse</span></div>';
-    l2+='</div>';
-    document.getElementById('s-l2-content').innerHTML=l2;document.getElementById('s-l2-input').placeholder=p.l2Placeholder||'Enter your answer...';
+    document.getElementById('s-puzzle-title').textContent=c.station;document.getElementById('s-puzzle-ref').textContent=c.mission;
+    var l1='<div class="layer-badge l1">Layer 1 · Physical Puzzle</div><div class="puzzle-card"><div class="puzzle-label">Your Challenge</div><div class="puzzle-title">'+esc(p.l1T)+'</div><div class="puzzle-desc">'+esc(p.l1D)+'</div><div class="puzzle-desc" style="color:var(--cream);">'+esc(p.l1S)+'</div>';
+    if(p.l1Sc)l1+='<div id="s-l1-scripture" class="puzzle-scripture" style="display:none;">'+esc(p.l1Sc)+'<span class="verse-ref">Identify this verse</span></div>';
+    l1+='</div><div class="puzzle-card" style="border-color:rgba(230,57,70,.15);"><div class="puzzle-label" style="color:var(--coral);">Answer</div><div class="puzzle-desc" style="font-size:13px;">'+esc(p.l1R)+'</div></div>';
+    document.getElementById('s-l1-content').innerHTML=l1;document.getElementById('s-l1-input').placeholder=p.l1P||'Enter...';
+    if(p.l1Sc){if(scriptureTimer)clearTimeout(scriptureTimer);scriptureTimer=setTimeout(function(){var e=document.getElementById('s-l1-scripture');if(e){e.style.display='block';e.style.animation='fadeUp .8s ease';}},180000);}
+    var l2='<div class="layer-badge l2">Layer 2 · Digital Puzzle</div><div class="puzzle-card" style="border-color:rgba(14,165,233,.15);"><div class="puzzle-label" style="color:var(--teal);">Your Challenge</div><div class="puzzle-title">'+esc(p.l2T)+'</div><div class="puzzle-desc">'+esc(p.l2D)+'</div><div class="puzzle-desc" style="color:var(--cream);">'+esc(p.l2S)+'</div>';
+    if(p.l2Sc)l2+='<div class="puzzle-scripture">'+esc(p.l2Sc)+'<span class="verse-ref">Identify this verse</span></div>';
+    l2+='</div>';document.getElementById('s-l2-content').innerHTML=l2;document.getElementById('s-l2-input').placeholder=p.l2P||'Enter...';
 }
 function renderConverge(){if(myTeamIndex<0)return;document.getElementById('s-my-symbol').textContent=SYMBOLS[myTeamIndex];document.getElementById('s-my-letter').textContent='Your letter: '+CLIQUES[myTeamIndex].letter;}
-function renderConvergeDisplay(){var el=document.getElementById('d-symbols');if(!el)return;var shuffled=shuffleArray(SYMBOLS);el.innerHTML=shuffled.map(function(s){return '<div class="conv-symbol">'+s+'</div>';}).join('');}
+function renderConvergeDisplay(){var e=document.getElementById('d-symbols');if(!e)return;e.innerHTML=shuffleArray(SYMBOLS).map(function(s){return '<div class="conv-symbol">'+s+'</div>';}).join('');}
 function triggerFinale(){setPhase('finale');}
 
-/* === EVENTS === */
+/* EVENTS */
 document.getElementById('s-partner-check').addEventListener('change',function(){document.getElementById('s-partner-field').style.display=this.checked?'block':'none';});
-document.getElementById('s-join-btn').addEventListener('click',function(){
-    var name=document.getElementById('s-name').value.trim();if(!name)return;
-    var partner=document.getElementById('s-partner-check').checked?document.getElementById('s-partner-name').value.trim():'';
-    myName=name;try{localStorage.setItem('wl-name',name);}catch(e){}
-    if(!IS_DEMO)db.collection('wildcat-players').add({name:name,partnerName:partner||null,teamIndex:-1,ts:firebase.firestore.FieldValue.serverTimestamp()});
-    document.getElementById('s-login-form').style.display='none';document.getElementById('s-login-done').style.display='block';
-});
-document.getElementById('s-l1-submit').addEventListener('click',function(){
-    if(myTeamIndex<0)return;var answer=document.getElementById('s-l1-input').value.trim().toUpperCase().replace(/\s+/g,'');
-    if(answer===L1_ANSWERS[myTeamIndex]){
-        document.getElementById('s-puzzle-layer1').style.display='none';document.getElementById('s-puzzle-codeword').style.display='block';
-        if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer1Done:true},{merge:true});
-        celebrateStudentSolve();
-    } else {handleWrongAnswer('l1');}
-});
-document.getElementById('s-delivered-btn').addEventListener('click',function(){
-    if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({hallPassDelivered:true},{merge:true});
-    document.getElementById('s-puzzle-codeword').style.display='none';document.getElementById('s-puzzle-layer2').style.display='block';
-});
-document.getElementById('s-l2-submit').addEventListener('click',function(){
-    if(myTeamIndex<0)return;var answer=document.getElementById('s-l2-input').value.trim().toUpperCase().replace(/\s+/g,'');
-    if(answer===L2_ANSWERS[myTeamIndex]){
-        document.getElementById('s-puzzle-layer2').style.display='none';document.getElementById('s-puzzle-done').style.display='block';
-        if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer2Done:true,letterFound:true},{merge:true});
-        celebrateStudentSolve();fireScreenFlash();
-    } else {handleWrongAnswer('l2');}
-});
+document.getElementById('s-join-btn').addEventListener('click',function(){var n=document.getElementById('s-name').value.trim();if(!n)return;var p=document.getElementById('s-partner-check').checked?document.getElementById('s-partner-name').value.trim():'';myName=n;try{localStorage.setItem('wl-name',n);}catch(e){}if(!IS_DEMO)db.collection('wildcat-players').add({name:n,partnerName:p||null,teamIndex:-1,ts:firebase.firestore.FieldValue.serverTimestamp()});document.getElementById('s-login-form').style.display='none';document.getElementById('s-login-done').style.display='block';});
+document.getElementById('s-l1-submit').addEventListener('click',function(){if(myTeamIndex<0)return;var a=document.getElementById('s-l1-input').value.trim().toUpperCase().replace(/\s+/g,'');if(a===L1A[myTeamIndex]){document.getElementById('s-puzzle-layer1').style.display='none';document.getElementById('s-puzzle-codeword').style.display='block';if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer1Done:true},{merge:true});celebrateStudent();}else{handleWrong('l1');}});
+document.getElementById('s-delivered-btn').addEventListener('click',function(){if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({hallPassDelivered:true},{merge:true});document.getElementById('s-puzzle-codeword').style.display='none';document.getElementById('s-puzzle-layer2').style.display='block';});
+document.getElementById('s-l2-submit').addEventListener('click',function(){if(myTeamIndex<0)return;var a=document.getElementById('s-l2-input').value.trim().toUpperCase().replace(/\s+/g,'');if(a===L2A[myTeamIndex]){document.getElementById('s-puzzle-layer2').style.display='none';document.getElementById('s-puzzle-done').style.display='block';if(!IS_DEMO)db.collection('wildcat-teams').doc('team-'+myTeamIndex).set({layer2Done:true,letterFound:true},{merge:true});celebrateStudent();flashScreen();}else{handleWrong('l2');}});
 
-/* === FIREBASE === */
+/* FIREBASE */
 if(!IS_DEMO){
-    db.collection('wildcat-state').doc('config').onSnapshot(function(doc){if(!doc.exists){db.collection('wildcat-state').doc('config').set({currentPhase:'lobby'});return;}var data=doc.data();processState(data);if(data.timerEnd)runTimer(data.timerEnd);});
+    db.collection('wildcat-state').doc('config').onSnapshot(function(doc){if(!doc.exists){db.collection('wildcat-state').doc('config').set({currentPhase:'lobby'});return;}processState(doc.data());if(doc.data().timerEnd)runTimer(doc.data().timerEnd);});
     db.collection('wildcat-players').orderBy('ts','asc').onSnapshot(function(snap){
-        var count=0;var joinList=document.getElementById('d-join-list');if(joinList)joinList.innerHTML='';
-        snap.forEach(function(doc){count++;var d=doc.data();if(joinList){var card=document.createElement('div');card.className='join-card';card.textContent=d.name+(d.partnerName?' & '+d.partnerName:'');joinList.appendChild(card);}
-        if(d.name===myName&&d.teamIndex>=0){
-            var wasUnset=myTeamIndex<0;
-            myTeamIndex=d.teamIndex;try{localStorage.setItem('wl-team',myTeamIndex);}catch(e){}
-            if(wasUnset||currentPhase==='assign')renderAssignment();
-        }});
-        var pc=document.getElementById('d-player-count');if(pc)pc.textContent=count;var tp=document.getElementById('t-players');if(tp)tp.textContent=count;
+        var cnt=0;var jl=document.getElementById('d-join-list');if(jl)jl.innerHTML='';
+        snap.forEach(function(doc){cnt++;var d=doc.data();if(jl){var c=document.createElement('div');c.className='join-card';c.textContent=d.name+(d.partnerName?' & '+d.partnerName:'');jl.appendChild(c);}
+        if(d.name===myName&&d.teamIndex>=0){var was=myTeamIndex<0;myTeamIndex=d.teamIndex;try{localStorage.setItem('wl-team',myTeamIndex);}catch(e){}if(was||currentPhase==='assign')renderAssignment();}});
+        var pc=document.getElementById('d-player-count');if(pc)pc.textContent=cnt;var tp=document.getElementById('t-players');if(tp)tp.textContent=cnt;
     });
     db.collection('wildcat-teams').onSnapshot(function(snap){
-        var teams={};snap.forEach(function(doc){var idx=parseInt(doc.id.replace('team-',''));teams[idx]=doc.data();});
+        var teams={};snap.forEach(function(doc){teams[parseInt(doc.id.replace('team-',''))]=doc.data();});
         renderTeamCards(teams);renderTeacherTeams(teams);
-        if(myTeamIndex>=0&&teams[myTeamIndex]){
-            var mt=teams[myTeamIndex];var cw=document.getElementById('s-codeword-text');if(cw)cw.textContent=mt.codeWord||'';
-            renderStudentHints(mt);
-            var destIdx=CLIQUES[myTeamIndex].passTo;
-            if(teams[destIdx]&&teams[destIdx].hallPassDelivered){var hp=document.getElementById('s-hp-received');if(hp)hp.style.display='block';}
-        }
+        if(myTeamIndex>=0&&teams[myTeamIndex]){var mt=teams[myTeamIndex];var cw=document.getElementById('s-codeword-text');if(cw)cw.textContent=mt.codeWord||'';renderStudentHints(mt);
+        var di=CLIQUES[myTeamIndex].passTo;if(teams[di]&&teams[di].hallPassDelivered){var hp=document.getElementById('s-hp-received');if(hp)hp.style.display='block';}}
     });
 } else {processState({currentPhase:'lobby'});}
 
-/* === RESET === */
-async function resetAll(){
-    if(!confirm('Delete ALL data?'))return;if(!confirm('Really sure?'))return;
-    if(timerInterval)clearInterval(timerInterval);timerInterval=null;if(scriptureTimer)clearTimeout(scriptureTimer);scriptureTimer=null;
-    var dt=document.getElementById('d-timer');if(dt)dt.textContent='28:00';var tt=document.getElementById('t-timer-display');if(tt)tt.textContent='28:00';
-    document.getElementById('finale-glow').classList.remove('show');prevFoundState={};
-    document.getElementById('video-iframe').src='about:blank';
-    if(!IS_DEMO){var cols=['wildcat-state','wildcat-players','wildcat-teams'];for(var i=0;i<cols.length;i++){var s=await db.collection(cols[i]).get();var b=db.batch();s.forEach(function(d){b.delete(d.ref);});await b.commit();}await db.collection('wildcat-state').doc('config').set({currentPhase:'lobby',timerEnd:null});}
-    myTeamIndex=-1;myName='';wrongCount={l1:0,l2:0};
-    try{localStorage.removeItem('wl-name');localStorage.removeItem('wl-team');}catch(e){}alert('Reset complete.');
-}
+async function resetAll(){if(!confirm('Delete ALL data?'))return;if(!confirm('Really sure?'))return;if(timerInterval)clearInterval(timerInterval);timerInterval=null;if(scriptureTimer)clearTimeout(scriptureTimer);scriptureTimer=null;var dt=document.getElementById('d-timer');if(dt)dt.textContent='28:00';var tt=document.getElementById('t-timer-display');if(tt)tt.textContent='28:00';document.getElementById('finale-glow').classList.remove('show');prevFoundState={};document.getElementById('video-iframe').src='about:blank';if(!IS_DEMO){var cs=['wildcat-state','wildcat-players','wildcat-teams'];for(var i=0;i<cs.length;i++){var s=await db.collection(cs[i]).get();var b=db.batch();s.forEach(function(d){b.delete(d.ref);});await b.commit();}await db.collection('wildcat-state').doc('config').set({currentPhase:'lobby',timerEnd:null});}myTeamIndex=-1;myName='';wrongCount={l1:0,l2:0};try{localStorage.removeItem('wl-name');localStorage.removeItem('wl-team');}catch(e){}alert('Reset complete.');}
 function esc(t){if(!t)return '';var d=document.createElement('div');d.textContent=t;return d.innerHTML;}
-var mode=detectMode();activateMode(mode);
-window.addEventListener('hashchange',function(){activateMode(detectMode());showPhase(currentPhase);});
+var mode=detectMode();activateMode(mode);window.addEventListener('hashchange',function(){activateMode(detectMode());showPhase(currentPhase);});
 </script>
 </body>
 </html>
