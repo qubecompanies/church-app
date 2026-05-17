@@ -1,0 +1,4221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Stripling Warriors — Multi-Device Show</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  /* =========================================================
+     STRIPLING WARRIORS — A MOTHER'S DAY ADVENTURE
+     Single-file show app. Open on iPhone, AirPlay to TV.
+     Edit the CONFIG block in the <script> at the bottom
+     to customize trivia, Ward Mom Feud answers, etc.
+     ========================================================= */
+
+  :root {
+    --ink-deep: #0a1628;
+    --ink-rich: #142337;
+    --ink-warm: #1c2a44;
+    --parchment: #f5e9d4;
+    --parchment-dim: #d4c5a8;
+    --parchment-soft: #ede0c8;
+    --gold-bright: #f4b840;
+    --gold-warm: #e89c2e;
+    --gold-deep: #b8860b;
+    --gold-glow: rgba(244, 184, 64, 0.55);
+    --ember: #d76b3a;
+    --ember-deep: #b04a1e;
+    --lapis: #2563eb;
+    --lapis-bright: #60a5fa;
+    --lapis-deep: #1e3a8a;
+    --copper: #c2722e;
+    --copper-bright: #e8923c;
+    --copper-deep: #8b4513;
+    --shadow-deep: rgba(0, 0, 0, 0.7);
+    --team-a: var(--lapis-bright);
+    --team-a-deep: var(--lapis-deep);
+    --team-b: var(--copper-bright);
+    --team-b-deep: var(--copper-deep);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; width: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    background:
+      radial-gradient(ellipse at 50% -10%, #1e3a5f 0%, var(--ink-deep) 45%, #050d1a 100%);
+    color: var(--parchment);
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+    position: relative;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* Subtle texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 23% 47%, rgba(244,184,64,0.03) 0, transparent 1.5px),
+      radial-gradient(circle at 71% 33%, rgba(244,184,64,0.025) 0, transparent 2px),
+      radial-gradient(circle at 51% 81%, rgba(244,184,64,0.02) 0, transparent 1.5px);
+    background-size: 130px 130px, 200px 200px, 170px 170px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Floating gold motes */
+  .motes { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+  .mote {
+    position: absolute; width: 4px; height: 4px;
+    background: var(--gold-bright); border-radius: 50%;
+    box-shadow: 0 0 10px var(--gold-glow);
+    opacity: 0; animation: drift linear infinite;
+  }
+  @keyframes drift {
+    from { transform: translateY(110vh) translateX(0); opacity: 0; }
+    10% { opacity: 0.7; }
+    90% { opacity: 0.4; }
+    to { transform: translateY(-10vh) translateX(40px); opacity: 0; }
+  }
+
+  /* =====================================================
+     SCREEN SYSTEM
+     ===================================================== */
+  .screen {
+    position: fixed; inset: 0; z-index: 10;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 5vh 5vw;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .screen.active {
+    display: flex;
+    opacity: 1;
+  }
+
+  /* =====================================================
+     TYPOGRAPHY
+     ===================================================== */
+  .display, h1, h2 {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+  }
+  .body-serif { font-family: 'Cormorant Garamond', serif; }
+  .impact { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
+
+  .gold-text {
+    background: linear-gradient(180deg, #fff4d6 0%, var(--gold-bright) 45%, var(--gold-deep) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px rgba(244, 184, 64, 0.3);
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+  }
+
+  /* =====================================================
+     SCREEN: COVER
+     ===================================================== */
+  .cover-shield {
+    width: clamp(140px, 22vh, 220px);
+    margin-bottom: 3vh;
+    filter: drop-shadow(0 8px 24px rgba(244, 184, 64, 0.25));
+    animation: shieldGlow 4s ease-in-out infinite;
+  }
+  @keyframes shieldGlow {
+    0%, 100% { filter: drop-shadow(0 8px 24px rgba(244, 184, 64, 0.25)); }
+    50% { filter: drop-shadow(0 12px 36px rgba(244, 184, 64, 0.5)); }
+  }
+  .cover-title {
+    font-size: clamp(2.5rem, 8vw, 6rem);
+    line-height: 0.95;
+    margin-bottom: 1.5vh;
+    animation: riseIn 1.2s ease-out;
+  }
+  .cover-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    color: var(--parchment-dim);
+    margin-bottom: 5vh;
+    letter-spacing: 0.08em;
+    animation: riseIn 1.2s ease-out 0.3s both;
+  }
+  .cover-flourish {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+    color: var(--gold-warm);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin: 2vh 0;
+  }
+  .cover-flourish::before, .cover-flourish::after {
+    content: '◆'; margin: 0 1.2em; opacity: 0.6;
+  }
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* =====================================================
+     BUTTONS
+     ===================================================== */
+  .btn {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 1.2em 2.5em;
+    background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-warm) 50%, var(--gold-deep) 100%);
+    color: var(--ink-deep);
+    border: 2px solid var(--gold-deep);
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow:
+      0 4px 0 var(--gold-deep),
+      0 8px 24px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::before {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.6s ease;
+  }
+  .btn:hover::before { left: 100%; }
+  .btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 var(--gold-deep), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .btn-secondary {
+    background: linear-gradient(180deg, #2c4060 0%, #1a2a44 100%);
+    color: var(--parchment);
+    border: 2px solid var(--gold-warm);
+    box-shadow: 0 4px 0 #0a1224, 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .btn-team-a {
+    background: linear-gradient(180deg, var(--team-a) 0%, var(--lapis) 50%, var(--team-a-deep) 100%);
+    color: white;
+    border: 2px solid var(--team-a-deep);
+    box-shadow: 0 4px 0 var(--team-a-deep), 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .btn-team-b {
+    background: linear-gradient(180deg, var(--team-b) 0%, var(--copper) 50%, var(--team-b-deep) 100%);
+    color: white;
+    border: 2px solid var(--team-b-deep);
+    box-shadow: 0 4px 0 var(--team-b-deep), 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .btn-small {
+    font-size: clamp(0.85rem, 1.4vw, 1rem);
+    padding: 0.8em 1.5em;
+  }
+
+  /* =====================================================
+     PERSISTENT CONTROLS (corner)
+     ===================================================== */
+  .controls {
+    position: fixed;
+    bottom: env(safe-area-inset-bottom, 12px);
+    right: 12px;
+    z-index: 100;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .ctrl-btn {
+    background: rgba(20, 35, 55, 0.85);
+    border: 1px solid rgba(244, 184, 64, 0.4);
+    color: var(--gold-bright);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .ctrl-btn:hover { background: rgba(244, 184, 64, 0.2); }
+  .ctrl-btn.large {
+    width: 56px; height: 56px; font-size: 1.4rem;
+    background: rgba(244, 184, 64, 0.95);
+    color: var(--ink-deep);
+    border-color: var(--gold-deep);
+  }
+
+  .nav-back {
+    position: fixed;
+    bottom: env(safe-area-inset-bottom, 12px);
+    left: 12px;
+    z-index: 100;
+  }
+
+  /* Section indicator (top center) */
+  .section-pip {
+    position: fixed;
+    top: env(safe-area-inset-top, 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    gap: 6px;
+    background: rgba(20, 35, 55, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(244, 184, 64, 0.2);
+  }
+  .pip {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(244, 184, 64, 0.25);
+    transition: all 0.3s ease;
+  }
+  .pip.done { background: var(--gold-deep); }
+  .pip.active {
+    background: var(--gold-bright);
+    box-shadow: 0 0 10px var(--gold-glow);
+    transform: scale(1.4);
+  }
+
+  /* =====================================================
+     SCOREBOARD (game show)
+     ===================================================== */
+  .scoreboard {
+    position: fixed;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background: rgba(10, 22, 40, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 14px 22px;
+    border-radius: 8px;
+    border: 1px solid rgba(244, 184, 64, 0.3);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  .team-card {
+    text-align: center;
+    min-width: 110px;
+    padding: 6px 12px;
+    border-radius: 6px;
+  }
+  .team-a-card { background: linear-gradient(180deg, var(--team-a-deep), var(--lapis-deep)); border: 1px solid var(--team-a); }
+  .team-b-card { background: linear-gradient(180deg, var(--team-b-deep), var(--copper-deep)); border: 1px solid var(--team-b); }
+  .team-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(0.85rem, 1.5vw, 1rem);
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.85);
+    line-height: 1;
+  }
+  .team-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    color: white;
+    line-height: 1;
+    margin-top: 2px;
+    transition: transform 0.3s ease;
+  }
+  .team-score.bump { transform: scale(1.4); }
+  .vs {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    color: var(--gold-bright);
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+  }
+
+  /* score adjust buttons in scoreboard hover/long-press menu */
+  .score-adjust {
+    display: flex; gap: 4px; margin-top: 6px; justify-content: center;
+  }
+  .score-adjust button {
+    width: 26px; height: 26px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1;
+  }
+  .score-adjust button:active { background: rgba(255,255,255,0.3); }
+
+  /* =====================================================
+     MISSION BRIEFING
+     ===================================================== */
+  .briefing-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1.3rem, 3.2vw, 2.2rem);
+    line-height: 1.4;
+    max-width: 26ch;
+    color: var(--parchment-soft);
+    margin: 4vh 0;
+    position: relative;
+  }
+  .briefing-quote::before, .briefing-quote::after {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-bright);
+    font-size: 3em;
+    line-height: 0;
+    vertical-align: -0.4em;
+    opacity: 0.6;
+  }
+  .briefing-quote::before { content: '"'; margin-right: 0.2em; }
+  .briefing-quote::after { content: '"'; margin-left: 0.2em; }
+  .briefing-attr {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1rem, 1.8vw, 1.3rem);
+    color: var(--gold-bright);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 1vh;
+  }
+  .button-row {
+    display: flex; gap: 16px; margin-top: 4vh;
+    flex-wrap: wrap; justify-content: center;
+  }
+
+  /* =====================================================
+     STORY PANEL
+     ===================================================== */
+  .story-panel {
+    max-width: 900px;
+    width: 100%;
+  }
+  .story-icon {
+    font-size: clamp(4rem, 10vh, 7rem);
+    margin-bottom: 3vh;
+    filter: drop-shadow(0 6px 16px rgba(244,184,64,0.25));
+    animation: iconPulse 3s ease-in-out infinite;
+  }
+  @keyframes iconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .story-headline {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1.6rem, 4.5vw, 3rem);
+    line-height: 1.15;
+    margin-bottom: 2vh;
+    color: var(--parchment);
+  }
+  .story-subtext {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.1rem, 2.5vw, 1.7rem);
+    color: var(--parchment-dim);
+    max-width: 30ch;
+    margin: 0 auto;
+    line-height: 1.5;
+    font-style: italic;
+  }
+  .story-progress {
+    margin-top: 5vh;
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--gold-warm);
+    letter-spacing: 0.3em;
+    font-size: 1rem;
+  }
+
+  /* =====================================================
+     ARMOR UP! (the moment)
+     ===================================================== */
+  .armor-screen {
+    background: radial-gradient(ellipse at center, #2a1010 0%, #0a0510 60%, #000 100%);
+  }
+  .armor-cry {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(3rem, 11vw, 9rem);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    margin: 1.5vh 0;
+    text-shadow: 0 0 40px rgba(244, 184, 64, 0.5);
+  }
+  .armor-cry.shown {
+    opacity: 1;
+    transform: scale(1);
+    animation: shake 0.6s ease;
+  }
+  .armor-cry.line-1 {
+    background: linear-gradient(180deg, #ffe7a0 0%, #f4b840 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .armor-cry.line-2 {
+    background: linear-gradient(180deg, #ffd9b0 0%, #e8923c 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .armor-cry.line-3 {
+    background: linear-gradient(180deg, #fff4d6 0%, #f4b840 50%, #c2410c 100%);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    font-size: clamp(3.5rem, 13vw, 11rem);
+    text-shadow: 0 0 60px rgba(244, 184, 64, 0.7);
+  }
+  @keyframes shake {
+    0%, 100% { transform: scale(1) translate(0); }
+    20% { transform: scale(1.05) translate(-4px, 2px); }
+    40% { transform: scale(1.03) translate(4px, -2px); }
+    60% { transform: scale(1.04) translate(-3px, 1px); }
+    80% { transform: scale(1.02) translate(2px, -1px); }
+  }
+  .armor-instruction {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    color: var(--parchment-dim);
+    margin-top: 4vh;
+    opacity: 0.7;
+  }
+  .armor-tap-prompt {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--gold-bright);
+    letter-spacing: 0.2em;
+    margin-top: 3vh;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* =====================================================
+     GAME SHOW HUB
+     ===================================================== */
+  .hub-banner {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    margin-bottom: 1vh;
+    margin-top: 8vh;
+  }
+  .hub-tag {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--parchment-dim);
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    margin-bottom: 5vh;
+  }
+  .round-grid {
+    display: flex; gap: clamp(12px, 2vw, 24px);
+    flex-wrap: wrap; justify-content: center;
+    max-width: 1100px; width: 100%;
+  }
+  .round-card {
+    flex: 1 1 220px;
+    max-width: 320px;
+    min-height: 200px;
+    padding: 24px 20px;
+    background: linear-gradient(180deg, rgba(28, 42, 68, 0.8), rgba(10, 22, 40, 0.9));
+    border: 2px solid var(--gold-deep);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: all 0.25s ease;
+    position: relative;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+  }
+  .round-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--gold-bright);
+    box-shadow: 0 12px 28px rgba(244, 184, 64, 0.25);
+  }
+  .round-card.completed {
+    opacity: 0.6;
+    border-color: rgba(244, 184, 64, 0.3);
+  }
+  .round-card.completed::after {
+    content: '✓ COMPLETE';
+    position: absolute;
+    top: 8px; right: 8px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.7rem;
+    color: var(--gold-bright);
+    background: rgba(244,184,64,0.15);
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.1em;
+  }
+  .round-icon {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    margin-bottom: 12px;
+  }
+  .round-num {
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--gold-bright);
+    letter-spacing: 0.2em;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+  }
+  .round-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+    line-height: 1.2;
+    color: var(--parchment);
+  }
+  .hub-finale-btn {
+    margin-top: 4vh;
+  }
+
+  /* =====================================================
+     QUESTION SCREEN (rounds 1, 2, 3)
+     ===================================================== */
+  .q-shell {
+    width: 100%;
+    max-width: 1100px;
+    display: flex; flex-direction: column;
+    align-items: center;
+    margin-top: 8vh;
+  }
+  .q-counter {
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--gold-warm);
+    letter-spacing: 0.3em;
+    font-size: clamp(0.9rem, 1.4vw, 1rem);
+    margin-bottom: 1.5vh;
+  }
+  .q-prompt {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1.6rem, 4.5vw, 3rem);
+    line-height: 1.2;
+    color: var(--parchment);
+    max-width: 22ch;
+    margin: 0 auto 4vh;
+  }
+  .q-answer {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: clamp(1.4rem, 3.5vw, 2.4rem);
+    color: var(--gold-bright);
+    background: linear-gradient(180deg, rgba(244, 184, 64, 0.15), rgba(244, 184, 64, 0.05));
+    padding: 1em 1.5em;
+    border-radius: 8px;
+    border: 2px solid rgba(244, 184, 64, 0.4);
+    max-width: 800px;
+    line-height: 1.4;
+    margin: 0 auto 4vh;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .q-answer.shown {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .q-controls {
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+    margin-top: 2vh;
+  }
+
+  /* =====================================================
+     FAMILY FEUD BOARD
+     ===================================================== */
+  .feud-board {
+    width: 100%; max-width: 720px;
+    background: linear-gradient(180deg, var(--ink-warm), var(--ink-rich));
+    border: 3px solid var(--gold-bright);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 2vh auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 0 40px rgba(244,184,64,0.1);
+  }
+  .feud-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 70px;
+    align-items: center;
+    background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+    border: 2px solid #3b82f6;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    height: clamp(48px, 7vh, 64px);
+    cursor: pointer;
+    transition: transform 0.15s;
+    overflow: hidden;
+  }
+  .feud-row:active { transform: scale(0.98); }
+  .feud-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.6rem, 3vw, 2rem);
+    color: var(--gold-bright);
+    text-align: center;
+    border-right: 2px solid #3b82f6;
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .feud-text-slot {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(0.95rem, 2vw, 1.4rem);
+    color: white;
+    text-align: left;
+    padding: 0 1em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .feud-pts {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+    color: var(--gold-bright);
+    text-align: center;
+    border-left: 2px solid #3b82f6;
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .feud-row.concealed .feud-text-slot,
+  .feud-row.concealed .feud-pts { color: transparent; }
+  .feud-row.concealed { background: linear-gradient(180deg, #16264d 0%, #0c1a36 100%); }
+  .feud-row.revealed {
+    background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold-warm) 100%);
+    border-color: var(--gold-deep);
+    animation: flipReveal 0.6s ease;
+  }
+  .feud-row.revealed .feud-num,
+  .feud-row.revealed .feud-text-slot,
+  .feud-row.revealed .feud-pts {
+    color: var(--ink-deep);
+    border-color: var(--gold-deep);
+  }
+  @keyframes flipReveal {
+    0% { transform: rotateX(90deg); }
+    100% { transform: rotateX(0); }
+  }
+
+  .feud-prompt {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    color: var(--parchment);
+    margin-bottom: 2vh;
+    max-width: 28ch;
+  }
+  .feud-strikes {
+    display: flex; gap: 16px;
+    margin: 1.5vh 0;
+    justify-content: center;
+  }
+  .strike {
+    width: 36px; height: 36px;
+    border: 2px solid rgba(244, 184, 64, 0.4);
+    color: rgba(244, 184, 64, 0.4);
+    border-radius: 50%;
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .strike.active {
+    background: var(--ember);
+    border-color: var(--ember-deep);
+    color: white;
+    box-shadow: 0 0 16px rgba(215, 107, 58, 0.5);
+  }
+
+  /* =====================================================
+     MATCH-THE-MOM
+     ===================================================== */
+  .mom-prompt-card {
+    background: linear-gradient(180deg, rgba(244, 184, 64, 0.12), rgba(244, 184, 64, 0.04));
+    border: 2px solid var(--gold-warm);
+    border-radius: 8px;
+    padding: 1.2em 1.8em;
+    max-width: 700px;
+    margin: 2vh auto 3vh;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    color: var(--parchment);
+    line-height: 1.4;
+  }
+  .mom-prompt-card .quote-mark {
+    font-family: 'Cinzel', serif;
+    font-size: 2em;
+    color: var(--gold-bright);
+    line-height: 0;
+    vertical-align: -0.3em;
+    opacity: 0.7;
+    margin: 0 0.15em;
+  }
+  .mom-options {
+    display: flex; gap: 12px;
+    flex-wrap: wrap; justify-content: center;
+    max-width: 1000px; width: 100%;
+  }
+  .mom-card {
+    flex: 1 1 200px;
+    max-width: 280px;
+    padding: 18px 14px;
+    background: linear-gradient(180deg, rgba(28, 42, 68, 0.8), rgba(10, 22, 40, 0.9));
+    border: 2px solid var(--gold-deep);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+  }
+  .mom-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--gold-bright);
+  }
+  .mom-card.correct {
+    background: linear-gradient(180deg, rgba(244, 184, 64, 0.4), rgba(244, 184, 64, 0.15));
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 30px rgba(244, 184, 64, 0.5);
+    animation: correctBounce 0.6s ease;
+  }
+  .mom-card.wrong {
+    opacity: 0.4;
+    border-color: var(--ember-deep);
+  }
+  @keyframes correctBounce {
+    0%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-12px) scale(1.05); }
+    60% { transform: translateY(-4px); }
+  }
+  .mom-name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+    color: var(--parchment);
+    margin-bottom: 6px;
+  }
+  .mom-hint {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+    color: var(--parchment-dim);
+  }
+  .mom-card.revealed .mom-fact {
+    display: block;
+  }
+  .mom-fact {
+    display: none;
+    margin-top: 10px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(0.85rem, 1.4vw, 1rem);
+    color: var(--gold-warm);
+    line-height: 1.4;
+  }
+
+  /* =====================================================
+     CRAFT TIMER
+     ===================================================== */
+  .craft-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(2.2rem, 6vw, 4rem);
+    line-height: 1;
+    margin-bottom: 1vh;
+  }
+  .craft-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+    color: var(--parchment-dim);
+    margin-bottom: 4vh;
+  }
+  .timer-wrap {
+    position: relative;
+    width: clamp(220px, 38vh, 320px);
+    height: clamp(220px, 38vh, 320px);
+    margin: 0 auto 2vh;
+  }
+  .timer-svg {
+    width: 100%; height: 100%;
+    transform: rotate(-90deg);
+  }
+  .timer-bg-ring {
+    fill: none;
+    stroke: rgba(244, 184, 64, 0.15);
+    stroke-width: 8;
+  }
+  .timer-ring {
+    fill: none;
+    stroke: var(--gold-bright);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+    filter: drop-shadow(0 0 12px rgba(244, 184, 64, 0.5));
+  }
+  .timer-display {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .timer-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 9vw, 6rem);
+    color: var(--parchment);
+    line-height: 1;
+  }
+  .timer-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--parchment-dim);
+    font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+    margin-top: 4px;
+  }
+  .craft-instructions {
+    max-width: 700px;
+    background: linear-gradient(180deg, rgba(28, 42, 68, 0.6), rgba(10, 22, 40, 0.7));
+    border: 1px solid rgba(244, 184, 64, 0.3);
+    border-radius: 8px;
+    padding: 1.2em 1.8em;
+    margin: 2vh auto;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    line-height: 1.5;
+    color: var(--parchment-soft);
+  }
+  .craft-controls {
+    display: flex; gap: 12px; margin-top: 1vh;
+    flex-wrap: wrap; justify-content: center;
+  }
+
+  /* =====================================================
+     FINALE / WRAP-UP
+     ===================================================== */
+  .winner-banner {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    margin-bottom: 2vh;
+  }
+  .winner-detail {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1.2rem, 2.8vw, 1.8rem);
+    color: var(--parchment-soft);
+    max-width: 28ch;
+    margin: 0 auto 3vh;
+    line-height: 1.5;
+  }
+  .verse-card {
+    max-width: 680px;
+    background: linear-gradient(180deg, rgba(244, 184, 64, 0.1), rgba(28, 42, 68, 0.6));
+    border: 2px solid var(--gold-warm);
+    border-radius: 8px;
+    padding: 2em 2.5em;
+    margin: 2vh auto;
+    position: relative;
+  }
+  .verse-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+    line-height: 1.6;
+    color: var(--parchment);
+    font-style: italic;
+  }
+  .verse-cite {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+    color: var(--gold-bright);
+    letter-spacing: 0.15em;
+    margin-top: 1.5em;
+  }
+  .happy-mothers {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(1.8rem, 5vw, 3.5rem);
+    margin-top: 4vh;
+  }
+
+  /* =====================================================
+     CONFETTI CANVAS
+     ===================================================== */
+  #confetti-canvas {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 200;
+  }
+
+  /* =====================================================
+     UTIL
+     ===================================================== */
+  .hidden { display: none !important; }
+  .invisible { visibility: hidden; }
+  .nowrap { white-space: nowrap; }
+
+  /* =====================================================
+     TRIBUTE CARD
+     ===================================================== */
+  .tribute-card {
+    max-width: 720px;
+    width: 92%;
+    background: linear-gradient(180deg, rgba(244, 184, 64, 0.08), rgba(28, 42, 68, 0.7));
+    border: 2px solid var(--gold-warm);
+    border-radius: 12px;
+    padding: 2.5em 1.8em;
+    margin: 0 auto;
+    min-height: clamp(180px, 26vh, 260px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 0 60px rgba(244, 184, 64, 0.06);
+    position: relative;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+  .tribute-card.fading {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  .tribute-name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1.3rem, 2.7vw, 2.1rem);
+    color: var(--gold-bright);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 auto 1vh;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
+    padding: 0 0.4em;
+  }
+  .tribute-virtue {
+    font-family: 'Cinzel', serif;
+    font-weight: 500;
+    font-size: clamp(1rem, 2.1vw, 1.5rem);
+    color: var(--copper-bright);
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    margin: 0 auto 2vh;
+    font-style: normal;
+    line-height: 1.3;
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+  .tribute-virtue::before, .tribute-virtue::after {
+    content: '◆';
+    color: var(--gold-warm);
+    margin: 0 0.6em;
+    opacity: 0.6;
+    font-size: 0.7em;
+    vertical-align: 0.15em;
+  }
+  .tribute-message {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1.05rem, 2.4vw, 1.55rem);
+    color: var(--parchment-soft);
+    line-height: 1.5;
+    max-width: 36ch;
+    margin: 0 auto;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    padding: 0 0.5em;
+  }
+  .tribute-message::before, .tribute-message::after {
+    content: none;
+  }
+  .tribute-nav {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 2.5vh;
+    flex-wrap: wrap;
+  }
+  body.display-mode .tribute-nav { display: none !important; }
+
+  /* =====================================================
+     VIDEO MODAL — embedded YouTube
+     ===================================================== */
+  .video-modal {
+    position: fixed; inset: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4vh 4vw;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .video-modal.shown {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .video-modal-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(10, 22, 40, 0.92), rgba(0, 0, 0, 0.98));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    cursor: pointer;
+  }
+  .video-modal-frame {
+    position: relative;
+    width: 100%;
+    max-width: 1280px;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 8px;
+    border: 2px solid var(--gold-bright);
+    box-shadow:
+      0 20px 80px rgba(0, 0, 0, 0.8),
+      0 0 60px rgba(244, 184, 64, 0.3),
+      inset 0 0 0 1px rgba(255, 244, 214, 0.2);
+    overflow: hidden;
+    transform: scale(0.95);
+    transition: transform 0.4s ease;
+  }
+  .video-modal.shown .video-modal-frame {
+    transform: scale(1);
+  }
+  .video-modal-frame iframe {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border: 0;
+  }
+  .video-close-btn {
+    position: absolute;
+    top: -52px;
+    right: 0;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold-warm));
+    color: var(--ink-deep);
+    border: 2px solid var(--gold-deep);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    transition: transform 0.15s ease;
+  }
+  .video-close-btn:hover { transform: scale(1.1); }
+  .video-close-btn:active { transform: scale(0.95); }
+
+  .video-caption {
+    position: absolute;
+    bottom: -44px;
+    left: 0; right: 0;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(0.85rem, 1.4vw, 1rem);
+    color: var(--parchment-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* In display mode, hide the close button (host controls playback) */
+  body.display-mode .video-close-btn,
+  body.display-mode .video-modal-bg { pointer-events: none; cursor: default; }
+  body.display-mode .video-close-btn { display: none; }
+
+  /* Host indicator banner when video is playing on display */
+  .video-host-indicator {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(10,22,40,0.9), rgba(0,0,0,0.97));
+    backdrop-filter: blur(8px);
+    z-index: 400;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6vh 6vw;
+    text-align: center;
+  }
+  .video-host-indicator.shown { display: flex; }
+  .video-host-indicator .host-icon {
+    font-size: clamp(4rem, 12vh, 8rem);
+    margin-bottom: 3vh;
+    animation: iconPulse 3s ease-in-out infinite;
+  }
+  .video-host-indicator .host-headline {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(1.8rem, 5vw, 3.5rem);
+    color: var(--gold-bright);
+    margin-bottom: 2vh;
+  }
+  .video-host-indicator .host-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+    color: var(--parchment-dim);
+    max-width: 32ch;
+    line-height: 1.5;
+    margin-bottom: 4vh;
+  }
+
+  /* =====================================================
+     TECH CHECK SCREEN
+     ===================================================== */
+  #s-techcheck.active {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 4vh;
+    padding-bottom: 12vh;
+    justify-content: flex-start;
+  }
+  body.on-techcheck .controls,
+  body.on-techcheck .nav-back,
+  body.on-techcheck .section-pip { display: none !important; }
+  .check-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    text-align: left;
+  }
+  @media (min-width: 720px) {
+    .check-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .check-card {
+    background: linear-gradient(180deg, rgba(28, 42, 68, 0.7), rgba(10, 22, 40, 0.85));
+    border: 1.5px solid rgba(244, 184, 64, 0.3);
+    border-radius: 8px;
+    padding: 16px 20px;
+    transition: border-color 0.2s ease, background 0.3s ease;
+  }
+  .check-card.passed {
+    border-color: var(--gold-bright);
+    background: linear-gradient(180deg, rgba(244, 184, 64, 0.12), rgba(28, 42, 68, 0.7));
+  }
+  .check-card.failed {
+    border-color: var(--ember);
+  }
+  .check-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--parchment);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .check-status {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.15em;
+    color: var(--parchment-dim);
+    margin-left: auto;
+  }
+  .check-card.passed .check-status { color: var(--gold-bright); }
+  .check-card.failed .check-status { color: var(--ember); }
+  .check-desc {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
+    color: var(--parchment-dim);
+    line-height: 1.4;
+    margin-bottom: 10px;
+  }
+  .check-action {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .check-btn {
+    background: rgba(244, 184, 64, 0.15);
+    border: 1px solid rgba(244, 184, 64, 0.4);
+    color: var(--gold-bright);
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 0.5em 1em;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+  }
+  .check-btn.confirm {
+    background: rgba(244, 184, 64, 0.85);
+    color: var(--ink-deep);
+  }
+  .check-btn:active { transform: translateY(1px); }
+
+  /* iPad / phone tweaks */
+  @media (max-height: 600px) {
+    .scoreboard { top: 8px; padding: 8px 14px; gap: 12px; }
+    .section-pip { display: none; }
+  }
+  @media (max-width: 480px) {
+    .scoreboard { gap: 10px; padding: 8px 12px; }
+    .team-card { min-width: 80px; }
+  }
+
+  /* =====================================================
+     AUDIO UNLOCK OVERLAY (display mode, one-time tap)
+     ===================================================== */
+  .audio-unlock-overlay {
+    position: fixed; inset: 0;
+    z-index: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4vh 4vw;
+    background: radial-gradient(ellipse at center, rgba(10,22,40,0.96), rgba(0,0,0,0.99));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .audio-unlock-card {
+    text-align: center;
+    background: linear-gradient(180deg, rgba(28, 42, 68, 0.85), rgba(10, 22, 40, 0.95));
+    border: 2px solid var(--gold-bright);
+    border-radius: 12px;
+    padding: 4vh 4vw;
+    max-width: 600px;
+    box-shadow: 0 8px 60px rgba(244, 184, 64, 0.25), 0 0 0 1px rgba(244,184,64,0.2);
+  }
+
+  /* =====================================================
+     DISPLAY MODE: hide all host controls
+     ===================================================== */
+  body.display-mode .controls,
+  body.display-mode .nav-back,
+  body.display-mode .section-pip,
+  body.display-mode .score-adjust,
+  body.display-mode .q-controls,
+  body.display-mode .craft-controls,
+  body.display-mode .hub-finale-btn,
+  body.display-mode .feud-strikes,
+  body.display-mode .btn-secondary.btn-small,
+  body.display-mode #s-cover .btn,
+  body.display-mode #s-briefing .button-row,
+  body.display-mode #s-armor #armor-after,
+  body.display-mode #s-armor .armor-tap-prompt,
+  body.display-mode #s-finale .btn,
+  body.display-mode #s-wrap .btn {
+    display: none !important;
+  }
+  /* In host-mode, hide the floating nav-back since it's now in the unified bar */
+  body.host-mode .nav-back { display: none !important; }
+  /* In display-mode, hide the in-bar back button (display still uses the original nav-back) */
+  body.display-mode #back-btn { display: none !important; }
+  /* By default (no body class), hide the in-bar back button — original floating one is used */
+  body:not(.host-mode) #back-btn { display: none !important; }
+  body.display-mode .round-card { pointer-events: none; cursor: default; }
+  body.display-mode .mom-card { pointer-events: none; cursor: default; }
+  body.display-mode .feud-row { cursor: default; }
+  body.display-mode #s-armor { cursor: default; }
+
+  /* =====================================================
+     HOST MODE — utility "remote control" UI
+     The display is the show; the host phone is the remote.
+     Big tap targets, no overlap, minimal chrome.
+     ===================================================== */
+
+  /* Hide scoreboard entirely on host phone — it floats on top of content
+     and is unnecessary because score adjustments happen via game flow. */
+  body.host-mode .scoreboard { display: none !important; }
+
+  /* Hide the floating back arrow — it merges into the unified bottom bar */
+  body.host-mode .nav-back { display: none !important; }
+
+  /* Hide the section pip dots on host — they were cosmetic noise on a tight UI */
+  body.host-mode .section-pip { display: none !important; }
+
+  /* Push the conn-pill (room code) to a less collision-prone spot, smaller */
+  body.host-mode .conn-pill {
+    top: 8px;
+    left: 8px;
+    transform: scale(0.85);
+    transform-origin: top left;
+  }
+
+  /* All screens get top padding for the room pill, bottom padding for the unified toolbar */
+  body.host-mode .screen {
+    padding: 6vh 4vw 16vh;
+    justify-content: flex-start;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Game-show screens specifically get tighter top padding since no scoreboard */
+  body.host-mode #s-r1.active,
+  body.host-mode #s-r2.active,
+  body.host-mode #s-r3.active,
+  body.host-mode #s-hub.active,
+  body.host-mode #s-finale.active {
+    padding-top: 8vh;
+  }
+
+  /* Q-shell — give content room to breathe above the toolbar */
+  body.host-mode .q-shell {
+    margin-top: 2vh;
+    padding-bottom: 4vh;
+  }
+
+  /* Q-controls — for game show action buttons, vertical stack with big targets.
+     This is the main interaction area; full visibility above the bottom bar. */
+  body.host-mode .q-controls {
+    position: static;
+    background: transparent;
+    backdrop-filter: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 3vh 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    box-shadow: none;
+    z-index: auto;
+  }
+  body.host-mode .q-controls .btn {
+    width: 100%;
+    font-size: 1rem;
+    padding: 18px 16px;
+    letter-spacing: 0.08em;
+    flex: none;
+    min-width: 0;
+    margin: 0;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.35), 0 6px 14px rgba(0,0,0,0.4);
+    min-height: 60px;
+    line-height: 1.2;
+  }
+
+  /* Mom cards: stacked vertically on host phone for big tap targets */
+  body.host-mode .mom-options {
+    flex-direction: column !important;
+    gap: 12px;
+  }
+  body.host-mode .mom-card {
+    padding: 16px 14px;
+    flex: none;
+    width: 100%;
+    max-width: none;
+    min-height: 70px;
+  }
+  body.host-mode .mom-name { font-size: 1.15rem; }
+  body.host-mode .mom-hint { font-size: 0.92rem; }
+
+  /* Hub round cards: stacked vertically on host phone */
+  body.host-mode .hub-grid {
+    flex-direction: column !important;
+    gap: 14px;
+  }
+  body.host-mode .round-card {
+    width: 100%;
+    max-width: none;
+    min-height: 100px;
+    padding: 18px 16px;
+  }
+
+  /* Question prompt and counter — slightly smaller on host so toolbar has room */
+  body.host-mode .q-prompt { font-size: clamp(1.2rem, 4vw, 1.6rem); }
+  body.host-mode .q-counter { font-size: 0.85rem; margin-bottom: 1.5vh; }
+  body.host-mode .q-answer { font-size: clamp(1.2rem, 4vw, 1.6rem); }
+
+  /* Button icons (✓/✗) — keep them visually balanced and slightly smaller than label text */
+  .btn-icon {
+    display: inline-block;
+    margin-right: 0.4em;
+    font-weight: 900;
+    font-size: 1.1em;
+    transform: translateY(-1px);
+  }
+
+  /* Divider inside q-controls — visual break between team-action buttons and round-control buttons */
+  .q-divider {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, rgba(244, 184, 64, 0.35), transparent);
+    margin: 6px 0;
+    flex: none;
+  }
+  body:not(.host-mode) .q-divider { display: none; }
+
+  /* =====================================================
+     UNIFIED BOTTOM BAR (host mode)
+     One row, evenly spaced, no overlaps, big tap targets.
+     ===================================================== */
+  body.host-mode .controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: linear-gradient(180deg, rgba(10, 22, 40, 0.85) 0%, rgba(10, 22, 40, 0.97) 40%, rgba(10, 22, 40, 0.99) 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 2px solid rgba(244, 184, 64, 0.4);
+    padding: 12px max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-right));
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    z-index: 200;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.5);
+  }
+  body.host-mode .controls .ctrl-btn {
+    width: 56px;
+    height: 56px;
+    font-size: 1.5rem;
+    background: linear-gradient(180deg, rgba(28, 42, 68, 0.95) 0%, rgba(10, 22, 40, 0.95) 100%);
+    border: 1px solid rgba(244, 184, 64, 0.45);
+    color: var(--gold-bright, #f4b840);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    transition: all 0.15s ease;
+    flex: 1 1 0;
+    margin: 0;
+    border-radius: 10px;
+    min-width: 0;
+  }
+  body.host-mode .controls .ctrl-btn:active {
+    background: linear-gradient(180deg, rgba(244, 184, 64, 0.3), rgba(244, 184, 64, 0.15));
+    transform: scale(0.94);
+  }
+  body.host-mode .controls .ctrl-btn.large {
+    width: 72px;
+    height: 72px;
+    font-size: 2rem;
+    flex: 0 0 72px;
+    background: linear-gradient(180deg, #f4b840 0%, #d49b25 100%);
+    color: var(--ink, #0a1628);
+    border: 2px solid rgba(244, 184, 64, 0.7);
+    box-shadow: 0 4px 0 rgba(180, 130, 30, 0.7), 0 6px 16px rgba(0,0,0,0.5);
+  }
+  body.host-mode .controls .ctrl-btn.large:active {
+    background: linear-gradient(180deg, #d49b25 0%, #b88119 100%);
+    transform: translateY(2px) scale(0.97);
+    box-shadow: 0 2px 0 rgba(180, 130, 30, 0.7), 0 3px 8px rgba(0,0,0,0.5);
+  }
+
+  /* Display mode keeps the original look (do not affect display screen layout) */
+
+  /* =====================================================
+     HOST-ONLY ANSWER PEEK
+     ===================================================== */
+  .host-answer-peek {
+    display: none;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+    color: var(--gold-bright);
+    background: rgba(244, 184, 64, 0.08);
+    border: 1px dashed rgba(244, 184, 64, 0.4);
+    padding: 0.6em 1em;
+    border-radius: 6px;
+    max-width: 600px;
+    margin: 0 auto 2vh;
+    line-height: 1.4;
+  }
+  .host-answer-peek::before {
+    content: '🔒 ANSWER (host only): ';
+    font-family: 'Cinzel', serif;
+    font-style: normal;
+    font-weight: 700;
+    color: var(--copper-bright);
+    letter-spacing: 0.1em;
+    font-size: 0.85em;
+  }
+  /* Show answer peek only on host phone, never on display */
+  body.host-mode .host-answer-peek { display: block; }
+  body.display-mode .host-answer-peek { display: none !important; }
+
+  /* On display, mark the correct mom card with a subtle host-only indicator */
+  body.host-mode .mom-card[data-correct="true"]::after {
+    content: '✓';
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    color: var(--gold-bright);
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 1.1rem;
+    background: rgba(244, 184, 64, 0.15);
+    border: 1px solid var(--gold-bright);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Host-only feud answer hint (shows answer text on hidden rows for host) */
+  body.host-mode .feud-row.concealed .feud-text-slot {
+    color: rgba(244, 184, 64, 0.45) !important;
+    font-style: italic;
+    font-size: 0.78em;
+  }
+  body.host-mode .feud-row.concealed .feud-pts {
+    color: rgba(244, 184, 64, 0.45) !important;
+    font-size: 0.85em;
+  }
+
+  /* =====================================================
+     R1 X MARKS (wrong-answer indicators)
+     ===================================================== */
+  .r1-x-marks {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin: 1vh 0 2vh;
+    min-height: 40px;
+  }
+  .r1-x-team {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: linear-gradient(180deg, rgba(215, 107, 58, 0.3), rgba(176, 74, 30, 0.4));
+    border: 2px solid var(--ember);
+    border-radius: 6px;
+    color: white;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(0.85rem, 1.6vw, 1rem);
+    letter-spacing: 0.1em;
+    animation: xPulse 0.4s ease;
+  }
+  .r1-x-team.shown { display: inline-flex; }
+  .r1-x-icon {
+    font-size: 1.4em;
+    color: var(--ember);
+    text-shadow: 0 0 8px rgba(215, 107, 58, 0.6);
+  }
+  @keyframes xPulse {
+    0%   { transform: scale(0.7); opacity: 0; }
+    60%  { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* X mark overlay on wrong mom cards in R3 */
+  .mom-card.wrong-pick {
+    position: relative;
+    opacity: 0.5;
+    border-color: var(--ember) !important;
+    background: linear-gradient(180deg, rgba(215, 107, 58, 0.15), rgba(28, 42, 68, 0.7)) !important;
+  }
+  .mom-card.wrong-pick::before {
+    content: '✗';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 4rem;
+    color: var(--ember);
+    text-shadow: 0 0 20px rgba(215, 107, 58, 0.7);
+    pointer-events: none;
+    animation: xPulse 0.4s ease;
+  }
+
+  /* "Wrong" buttons styled with ember tint */
+  .btn-wrong {
+    background: linear-gradient(180deg, #d76b3a 0%, #b04a1e 100%) !important;
+    color: white !important;
+    border-color: var(--ember-deep) !important;
+    box-shadow: 0 4px 0 var(--ember-deep), 0 8px 24px rgba(0,0,0,0.4) !important;
+  }
+
+  /* Hide the right/hub/back nav controls on setup screen — they're meaningless there */
+  body.on-setup .controls,
+  body.on-setup .nav-back,
+  body.on-setup .section-pip { display: none !important; }
+
+  /* =====================================================
+     SETUP / LANDING SCREEN
+     ===================================================== */
+  /* The setup screen is intentionally tall — let it scroll naturally
+     instead of being clipped by the fixed viewport like other screens. */
+  #s-setup.active {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 4vh;
+    padding-bottom: 12vh;  /* leave room above the persistent corner controls */
+    justify-content: flex-start;
+  }
+  .setup-shell {
+    max-width: 700px;
+    width: 100%;
+  }
+  .setup-card {
+    background: linear-gradient(180deg, rgba(28, 42, 68, 0.7), rgba(10, 22, 40, 0.85));
+    border: 2px solid var(--gold-warm);
+    border-radius: 12px;
+    padding: 2em 2em;
+    margin: 1.5vh auto;
+    text-align: left;
+  }
+  .setup-step-num {
+    display: inline-block;
+    width: 36px; height: 36px;
+    background: var(--gold-bright);
+    color: var(--ink-deep);
+    border-radius: 50%;
+    text-align: center; line-height: 36px;
+    font-family: 'Cinzel', serif; font-weight: 900;
+    font-size: 1.1rem;
+    margin-right: 12px;
+    vertical-align: middle;
+  }
+  .setup-title-row {
+    display: flex; align-items: center;
+    margin-bottom: 14px;
+  }
+  .setup-step-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+    color: var(--gold-bright);
+    letter-spacing: 0.05em;
+  }
+  .setup-body {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1rem, 1.8vw, 1.2rem);
+    color: var(--parchment-soft);
+    line-height: 1.5;
+  }
+  .setup-body code, .room-code-display {
+    font-family: 'Bebas Neue', monospace, sans-serif;
+    background: rgba(244, 184, 64, 0.15);
+    color: var(--gold-bright);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(244, 184, 64, 0.3);
+    letter-spacing: 0.15em;
+    font-size: 1.1em;
+  }
+  .room-code-banner {
+    text-align: center;
+    margin: 2vh 0;
+  }
+  .room-code-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
+    color: var(--parchment-dim);
+    margin-bottom: 4px;
+  }
+  .room-code-big {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: clamp(2.5rem, 7vw, 4.5rem);
+    letter-spacing: 0.2em;
+    color: var(--gold-bright);
+    text-shadow: 0 0 30px rgba(244, 184, 64, 0.4);
+  }
+  .qr-wrap {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    display: inline-block;
+    margin: 1vh 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .qr-wrap img { display: block; }
+  .setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 2vh;
+  }
+  @media (max-width: 600px) {
+    .setup-grid { grid-template-columns: 1fr; }
+  }
+  .conn-pill {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 200;
+    background: rgba(20, 35, 55, 0.85);
+    border: 1px solid rgba(244, 184, 64, 0.4);
+    padding: 6px 12px;
+    border-radius: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--gold-bright);
+    backdrop-filter: blur(8px);
+  }
+  .conn-pill.disconnected { color: var(--ember); border-color: rgba(215, 107, 58, 0.5); }
+  .conn-pill .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--gold-bright);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .conn-pill.disconnected .dot { background: var(--ember); }
+</style>
+</head>
+<body>
+
+<!-- Firebase v9 modular SDK exposed to window.firebaseAPI for use in regular script -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+  window.firebaseAPI = { initializeApp, getFirestore, doc, setDoc, onSnapshot, serverTimestamp };
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
+<!-- Floating motes -->
+<div class="motes" id="motes"></div>
+
+<!-- Connection pill (host/display modes only) -->
+<div class="conn-pill" id="conn-pill" style="display:none;">
+  <span class="dot"></span><span id="conn-text">CONNECTING…</span>
+</div>
+
+<!-- ============= SETUP / LANDING SCREEN (no mode param) ============= -->
+<section class="screen" id="s-setup" data-step="-1">
+  <div class="setup-shell">
+    <h1 class="display gold-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1vh;">
+      Stripling Warriors
+    </h1>
+    <div class="cover-flourish" style="margin-bottom: 3vh;">Multi-Device Setup</div>
+
+    <div class="room-code-banner">
+      <div class="room-code-label">YOUR ROOM CODE</div>
+      <div class="room-code-big" id="setup-room-code">----</div>
+    </div>
+
+    <div class="setup-card">
+      <div class="setup-title-row">
+        <span class="setup-step-num">1</span>
+        <span class="setup-step-title">On the TV / Display Device</span>
+      </div>
+      <div class="setup-body">
+        Open this URL in a browser on the laptop or iPad you'll connect to the TV.
+        Then tap the button below <em>on that device</em> to enter Display mode:
+        <div style="text-align:center; margin-top: 2vh;">
+          <button class="btn btn-secondary" id="setup-display-btn">▸ Continue as Display</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-card">
+      <div class="setup-title-row">
+        <span class="setup-step-num">2</span>
+        <span class="setup-step-title">On Your Phone (the controller)</span>
+      </div>
+      <div class="setup-body">
+        <strong style="color: var(--gold-bright); font-family: 'Cinzel', serif; letter-spacing: 0.05em;">EASIEST:</strong>
+        scan this QR with your iPhone camera — it auto-joins as host on this room:
+        <div style="text-align:center; margin-top: 2vh;">
+          <div class="qr-wrap"><img id="setup-qr-host" src="" width="200" height="200" alt="QR to join as host"/></div>
+        </div>
+        <div style="text-align: center; margin-top: 1vh; font-family: 'Cormorant Garamond', serif; font-style: italic; color: var(--parchment-dim); font-size: clamp(0.9rem, 1.5vw, 1rem);">
+          Point camera, tap notification, allow → done.
+        </div>
+
+        <hr style="border: none; border-top: 1px solid rgba(244,184,64,0.2); margin: 3vh 0 2vh;"/>
+
+        <div style="font-size: clamp(0.95rem, 1.7vw, 1.1rem); color: var(--parchment-dim); margin-bottom: 1.5vh;">
+          <strong style="color: var(--gold-bright);">Or:</strong> if you opened this URL on your phone instead and want to use <em>this</em> phone as the host, just tap:
+        </div>
+        <div style="text-align:center;">
+          <button class="btn btn-small" id="setup-host-btn">▸ Continue as Host</button>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid rgba(244,184,64,0.2); margin: 3vh 0 2vh;"/>
+
+        <div style="font-size: clamp(0.95rem, 1.7vw, 1.1rem); color: var(--parchment-dim); margin-bottom: 1vh;">
+          <strong style="color: var(--gold-bright);">Already started on another device?</strong><br/>
+          Type its 4-letter room code to join as host:
+        </div>
+        <div style="display: flex; gap: 8px; align-items: stretch; justify-content: center; margin-top: 1vh; flex-wrap: wrap;">
+          <input type="text" id="setup-join-input" maxlength="4" placeholder="ABCD"
+                 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 0.3em;
+                        text-align: center; text-transform: uppercase;
+                        background: rgba(20,35,55,0.85); color: var(--gold-bright);
+                        border: 2px solid rgba(244,184,64,0.4); border-radius: 6px;
+                        padding: 0.4em 0.8em; width: 130px; outline: none;"
+                 oninput="this.value = this.value.toUpperCase()"/>
+          <button class="btn btn-secondary btn-small" id="setup-join-btn">Join Room →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-card" style="border-color: var(--lapis); background: linear-gradient(180deg, rgba(30,58,138,0.3), rgba(10,22,40,0.7));">
+      <div class="setup-title-row">
+        <span class="setup-step-num" style="background: var(--lapis-bright);">i</span>
+        <span class="setup-step-title" style="color: var(--lapis-bright);">First-time Firebase setup?</span>
+      </div>
+      <div class="setup-body" style="font-size: clamp(0.9rem, 1.6vw, 1.05rem);">
+        This file requires a Firebase Firestore project to sync between devices. If you haven't yet:<br/>
+        1. Open the file in a text editor<br/>
+        2. Find <code>FIREBASE_CONFIG</code> near the top of the script<br/>
+        3. Paste your Firebase project's config object (from Firebase console → Project settings → Your apps → Config)<br/>
+        4. In Firestore Rules, allow reads/writes on <code>/sessions/{room}</code><br/>
+        Save and reload. <em>One-time setup — works for every Mother's Day after.</em>
+      </div>
+    </div>
+
+    <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; color: var(--parchment-dim); margin-top: 2vh; font-size: clamp(0.9rem, 1.5vw, 1.05rem);">
+      Or: skip the multi-device setup entirely and use the simple version where you just AirPlay your phone to the TV.
+    </p>
+  </div>
+</section>
+
+<!-- ============= SCREENS ============= -->
+
+<!-- 1. COVER -->
+<section class="screen active" id="s-cover" data-step="0">
+  <svg class="cover-shield" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#f4b840"/>
+        <stop offset="50%" stop-color="#e89c2e"/>
+        <stop offset="100%" stop-color="#b8860b"/>
+      </linearGradient>
+      <linearGradient id="shieldEdge" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fff4d6"/>
+        <stop offset="100%" stop-color="#8b6508"/>
+      </linearGradient>
+    </defs>
+    <!-- Shield body -->
+    <path d="M100 10 L180 30 L180 110 Q180 180 100 230 Q20 180 20 110 L20 30 Z"
+          fill="url(#shieldGrad)" stroke="url(#shieldEdge)" stroke-width="4"/>
+    <!-- Inner border -->
+    <path d="M100 25 L168 42 L168 110 Q168 172 100 215 Q32 172 32 110 L32 42 Z"
+          fill="none" stroke="#8b6508" stroke-width="1.5" opacity="0.6"/>
+    <!-- Crossed swords -->
+    <g stroke="#3a2a10" stroke-width="3" fill="#3a2a10">
+      <line x1="60" y1="70" x2="140" y2="170" stroke-linecap="round"/>
+      <line x1="140" y1="70" x2="60" y2="170" stroke-linecap="round"/>
+      <circle cx="60" cy="70" r="6"/>
+      <circle cx="140" cy="70" r="6"/>
+      <circle cx="60" cy="170" r="4" fill="#8b6508"/>
+      <circle cx="140" cy="170" r="4" fill="#8b6508"/>
+    </g>
+    <!-- Crown above -->
+    <path d="M70 50 L80 38 L90 48 L100 32 L110 48 L120 38 L130 50 L130 58 L70 58 Z"
+          fill="#fff4d6" stroke="#8b6508" stroke-width="1"/>
+    <circle cx="100" cy="42" r="3" fill="#d76b3a"/>
+  </svg>
+  <h1 class="cover-title gold-text">Stripling<br/>Warriors</h1>
+  <div class="cover-flourish">A Mother's Day Adventure</div>
+  <p class="cover-subtitle">"We do not doubt our mothers knew it"</p>
+  <button class="btn" onclick="goNext()">Begin the Journey</button>
+</section>
+
+<!-- 2a. SINGING TIME — INTRO -->
+<section class="screen" id="s-sing-intro">
+  <div style="font-size: clamp(4rem, 12vh, 8rem); margin-bottom: 1vh; line-height: 1;">🎵</div>
+  <h1 class="display gold-text" style="font-size: clamp(2.5rem, 8vw, 5.5rem); line-height: 1;">SINGING TIME</h1>
+  <div class="cover-flourish" style="margin: 2vh 0;">with Brother Best</div>
+  <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: clamp(1.2rem, 2.6vw, 1.8rem); color: var(--parchment-soft); max-width: 22ch; margin: 2vh auto;">
+    Stand up, Stripling Warriors. Let your voices ring.
+  </p>
+</section>
+
+<!-- 2b. SINGING TIME — WARRIOR ENERGIZER -->
+<section class="screen" id="s-sing-warrior">
+  <div style="font-size: clamp(4rem, 12vh, 8rem); margin-bottom: 1vh; line-height: 1;">🎤</div>
+  <h2 class="display gold-text" style="font-size: clamp(2rem, 6.5vw, 4.5rem); line-height: 1.05;">
+    Sing Like a<br/>Stripling Warrior
+  </h2>
+  <p class="cover-subtitle" style="margin-top: 2vh;">Strong &nbsp;·&nbsp; Brave &nbsp;·&nbsp; Loud</p>
+  <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: clamp(1rem, 2vw, 1.4rem); color: var(--parchment-dim); margin-top: 4vh; max-width: 24ch;">
+    Br. Best may pause here mid-song to re-energize the room.
+  </p>
+</section>
+
+<!-- 2c. SINGING TIME — BRIDGE TO STORY -->
+<section class="screen" id="s-sing-bridge">
+  <div style="font-size: clamp(3rem, 8vh, 5rem); margin-bottom: 2vh; line-height: 1;">⚔️</div>
+  <h2 class="display gold-text" style="font-size: clamp(1.6rem, 4.5vw, 3rem); line-height: 1.15; max-width: 22ch;">
+    Did you know there were <em style="font-style: italic; color: var(--parchment);">real</em> warriors who sang like that?
+  </h2>
+  <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: clamp(1.1rem, 2.4vw, 1.5rem); color: var(--parchment-soft); margin: 4vh auto; max-width: 28ch; line-height: 1.5;">
+    Two thousand of them. And every single one came home alive. Let me tell you their story…
+  </p>
+  <button class="btn" onclick="goNext()">Tell the Story →</button>
+</section>
+
+<!-- 3. MISSION BRIEFING -->
+<section class="screen" id="s-briefing" data-step="1">
+  <div class="section-pip-anchor"></div>
+  <div style="font-size: clamp(3rem, 8vh, 5rem); margin-bottom: 1vh;">⚔️</div>
+  <h2 class="display gold-text" style="font-size: clamp(1.8rem, 5vw, 3rem);">A MESSAGE FROM HELAMAN</h2>
+  <p class="briefing-quote">
+    Soldiers! I am Helaman. I need 2,000 of the bravest young warriors in the land.
+    But before you join my army, you must hear how this story began…
+  </p>
+  <div class="button-row">
+    <button class="btn" onclick="goNext()">Continue to Story →</button>
+  </div>
+  <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; color: var(--parchment-dim); margin-top: 3vh; font-size: clamp(0.9rem, 1.5vw, 1.1rem); max-width: 30ch;">
+    Have a Young Man read this aloud as Helaman before tapping Continue.
+  </p>
+</section>
+
+<!-- 3-7. STORY PANELS -->
+<section class="screen" id="s-story-1" data-step="2">
+  <div class="story-panel">
+    <div class="story-icon">🛡️</div>
+    <h2 class="story-headline">Their parents had buried their swords forever.</h2>
+    <p class="story-subtext">The Anti-Nephi-Lehies had made a sacred covenant — they would never fight again, no matter what.</p>
+    <p class="story-progress">Story · 1 of 5</p>
+  </div>
+</section>
+
+<section class="screen" id="s-story-2" data-step="3">
+  <div class="story-panel">
+    <div class="story-icon">👦</div>
+    <h2 class="story-headline">But their sons had not made that covenant.</h2>
+    <p class="story-subtext">When their friends needed help, the young men were free to act.</p>
+    <p class="story-progress">Story · 2 of 5</p>
+  </div>
+</section>
+
+<section class="screen" id="s-story-3" data-step="4">
+  <div class="story-panel">
+    <div class="story-icon">✋</div>
+    <h2 class="story-headline">Two thousand young men volunteered.</h2>
+    <p class="story-subtext">They left their families to defend their people. Helaman called them his sons.</p>
+    <p class="story-progress">Story · 3 of 5</p>
+  </div>
+</section>
+
+<section class="screen" id="s-story-4" data-step="5">
+  <div class="story-panel">
+    <div class="story-icon">💛</div>
+    <h2 class="story-headline">"Their mothers had taught them…"</h2>
+    <p class="story-subtext">"…that if they did not doubt, God would deliver them."</p>
+    <p class="story-progress">Story · 4 of 5</p>
+  </div>
+</section>
+
+<section class="screen" id="s-story-5" data-step="6">
+  <div class="story-panel">
+    <div class="story-icon">🏠</div>
+    <h2 class="story-headline">All 2,060 came home.</h2>
+    <p class="story-subtext">Every one was wounded. Not one of them died. Their faith — and their mothers' faith — held.</p>
+    <p class="story-progress">Story · 5 of 5</p>
+  </div>
+</section>
+
+<!-- 7.5 VIDEO MOMENT — between story and battle cry -->
+<section class="screen" id="s-video-moment">
+  <div class="story-panel">
+    <div style="font-size: clamp(4rem, 10vh, 7rem); margin-bottom: 3vh;">📺</div>
+    <h2 class="display gold-text" style="font-size: clamp(2rem, 5.5vw, 4rem); line-height: 1.05;">
+      Watch It Happen
+    </h2>
+    <p class="briefing-quote" style="margin: 3vh auto;">
+      Now, see the moment for yourselves — the warriors and their mothers, in the words of the prophets.
+    </p>
+    <div class="button-row" style="margin-top: 4vh;">
+      <button class="btn" onclick="openVideo()">▶ Play Video</button>
+      <button class="btn btn-secondary" onclick="goNext()">Continue to Battle Cry →</button>
+    </div>
+    <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; color: var(--parchment-dim); margin-top: 3vh; font-size: clamp(0.9rem, 1.5vw, 1.1rem); max-width: 32ch;">
+      Tap "Play Video" to start. After watching, tap "Continue" to lead the Battle Cry.
+    </p>
+  </div>
+</section>
+
+<!-- 8. ARMOR UP -->
+<section class="screen armor-screen" id="s-armor" data-step="7">
+  <p class="armor-instruction">When ready, ALL of us shout these three lines together.<br/>Tap to reveal each one — louder each time!</p>
+  <div class="armor-cry line-1" id="armor-1">WE DO NOT DOUBT —</div>
+  <div class="armor-cry line-2" id="armor-2">OUR MOTHERS —</div>
+  <div class="armor-cry line-3" id="armor-3">KNEW IT!</div>
+  <div class="armor-tap-prompt" id="armor-tap">▼ TAP TO REVEAL ▼</div>
+  <div id="armor-after" class="hidden" style="margin-top: 4vh;">
+    <button class="btn" onclick="goNext()">Onward — to the Game! →</button>
+  </div>
+</section>
+
+<!-- 9. GAME SHOW HUB -->
+<section class="screen" id="s-hub" data-step="8">
+  <h2 class="hub-banner gold-text">WE DO NOT DOUBT!</h2>
+  <p class="hub-tag">— a game show in three rounds —</p>
+  <div class="round-grid">
+    <div class="round-card" id="card-r1" onclick="enterRound(1)">
+      <div class="round-icon">🏛️</div>
+      <div class="round-num">ROUND 1</div>
+      <div class="round-title">Stripling Warrior Trivia</div>
+    </div>
+    <div class="round-card" id="card-r2" onclick="enterRound(2)">
+      <div class="round-icon">👵</div>
+      <div class="round-num">ROUND 2</div>
+      <div class="round-title">Ward Mom Feud</div>
+    </div>
+    <div class="round-card" id="card-r3" onclick="enterRound(3)">
+      <div class="round-icon">📜</div>
+      <div class="round-num">ROUND 3</div>
+      <div class="round-title">Match the Mother</div>
+    </div>
+  </div>
+  <button class="btn btn-secondary btn-small hub-finale-btn" onclick="goToFinale()">Skip to Finale →</button>
+</section>
+
+<!-- 10. ROUND 1 — TRIVIA -->
+<!-- 10. ROUND 1 — TRIVIA -->
+<section class="screen" id="s-r1" data-step="9">
+  <div class="q-shell">
+    <div class="q-counter" id="r1-counter">QUESTION 1 OF 5</div>
+    <h2 class="q-prompt" id="r1-prompt">…</h2>
+    <!-- Host-only answer peek: visible only to host phone, not on TV -->
+    <div class="host-answer-peek" id="r1-host-answer">…</div>
+    <div class="q-answer" id="r1-answer">…</div>
+    <!-- X marks shown when a team gets it wrong -->
+    <div class="r1-x-marks">
+      <div class="r1-x-team" id="r1-x-a"><span class="r1-x-icon">✗</span> TEAM A WRONG</div>
+      <div class="r1-x-team" id="r1-x-b"><span class="r1-x-icon">✗</span> TEAM B WRONG</div>
+    </div>
+    <div class="q-controls">
+      <button class="btn btn-team-a" id="r1-correct-a" onclick="r1MarkCorrect('a')"><span class="btn-icon">✓</span> Team A Correct +10</button>
+      <button class="btn btn-team-a btn-wrong" id="r1-wrong-a" onclick="r1MarkWrong('a')"><span class="btn-icon">✗</span> Team A Wrong</button>
+      <button class="btn btn-team-b" id="r1-correct-b" onclick="r1MarkCorrect('b')"><span class="btn-icon">✓</span> Team B Correct +10</button>
+      <button class="btn btn-team-b btn-wrong" id="r1-wrong-b" onclick="r1MarkWrong('b')"><span class="btn-icon">✗</span> Team B Wrong</button>
+      <div class="q-divider"></div>
+      <button class="btn btn-secondary" id="r1-reveal" onclick="r1Reveal()">Reveal Answer</button>
+      <button class="btn btn-secondary" id="r1-next" onclick="r1Next()">Next Question →</button>
+    </div>
+  </div>
+</section>
+
+<!-- 11. ROUND 2 — WARD MOM FEUD -->
+<section class="screen" id="s-r2" data-step="10">
+  <div class="q-shell">
+    <div class="q-counter" id="r2-counter">PROMPT 1 OF 3</div>
+    <h2 class="feud-prompt" id="r2-prompt">…</h2>
+    <div class="feud-board" id="feud-board"></div>
+    <div class="feud-strikes">
+      <div class="strike" id="strike-1" onclick="toggleStrike(1)">X</div>
+      <div class="strike" id="strike-2" onclick="toggleStrike(2)">X</div>
+      <div class="strike" id="strike-3" onclick="toggleStrike(3)">X</div>
+    </div>
+    <div class="q-controls">
+      <button class="btn btn-team-a" onclick="award('a', getFeudPoints()); r2Next();"><span class="btn-icon">✓</span> Team A wins board</button>
+      <button class="btn btn-team-b" onclick="award('b', getFeudPoints()); r2Next();"><span class="btn-icon">✓</span> Team B wins board</button>
+      <div class="q-divider"></div>
+      <button class="btn btn-secondary" onclick="r2Next()">Next Prompt →</button>
+    </div>
+  </div>
+</section>
+
+<!-- 12. ROUND 3 — MATCH THE MOTHER -->
+<section class="screen" id="s-r3" data-step="11">
+  <div class="q-shell">
+    <div class="q-counter" id="r3-counter">QUESTION 1 OF 5</div>
+    <div class="mom-prompt-card" id="r3-prompt">…</div>
+    <div class="mom-options" id="r3-options"></div>
+    <div class="q-controls" style="margin-top: 3vh;">
+      <button class="btn btn-team-a hidden" id="r3-pts-a" onclick="award('a',10); r3Next();"><span class="btn-icon">✓</span> Team A +10</button>
+      <button class="btn btn-team-b hidden" id="r3-pts-b" onclick="award('b',10); r3Next();"><span class="btn-icon">✓</span> Team B +10</button>
+      <button class="btn btn-secondary hidden" id="r3-skip" onclick="r3Next()">Continue →</button>
+    </div>
+  </div>
+</section>
+
+<!-- 13. FINALE -->
+<section class="screen" id="s-finale" data-step="12">
+  <div style="font-size: clamp(4rem, 10vh, 7rem); margin-bottom: 2vh;">🏆</div>
+  <h2 class="winner-banner gold-text" id="finale-banner">…</h2>
+  <p class="winner-detail" id="finale-detail">…</p>
+  <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: clamp(1.3rem, 3vw, 2rem); color: var(--gold-bright); max-width: 24ch; margin: 3vh auto;">
+    But the real winners are <strong style="color: var(--parchment);">our mothers</strong> — and today, we honor them.
+  </p>
+  <button class="btn" onclick="goNext()">Make a Gift for Mom →</button>
+</section>
+
+<!-- 14. CRAFT TIME -->
+<section class="screen" id="s-craft" data-step="13">
+  <h2 class="craft-title gold-text">Shield of Faith</h2>
+  <p class="craft-subtitle">Build a shield to give to your mother today</p>
+  <div class="timer-wrap">
+    <svg class="timer-svg" viewBox="0 0 200 200">
+      <circle class="timer-bg-ring" cx="100" cy="100" r="92"/>
+      <circle class="timer-ring" id="timer-ring" cx="100" cy="100" r="92"
+              stroke-dasharray="578" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-display">
+      <div class="timer-num" id="timer-num">10:00</div>
+      <div class="timer-label">to build your shield</div>
+    </div>
+  </div>
+  <div class="craft-instructions">
+    <strong style="color: var(--gold-bright); font-family: 'Cinzel', serif; letter-spacing: 0.1em;">FOUR QUADRANTS — fill in each one:</strong><br/>
+    1. Something my mom <em>taught</em> me<br/>
+    2. Something my mom is <em>really good at</em><br/>
+    3. My favorite thing we do <em>together</em><br/>
+    4. Why I do not doubt my mom
+  </div>
+  <div class="craft-controls">
+    <button class="btn btn-secondary btn-small" id="timer-toggle" onclick="toggleTimer()">▶ Start</button>
+    <button class="btn btn-secondary btn-small" onclick="resetTimer()">Reset</button>
+    <button class="btn btn-small" onclick="goNext()">Wrap Up →</button>
+  </div>
+</section>
+
+<!-- 14a. WALL OF MOTHERS — cycles thru scripture mothers with virtues -->
+<section class="screen" id="s-tribute">
+  <div style="font-size: clamp(3rem, 8vh, 5rem); margin-bottom: 1vh; line-height: 1;">📜</div>
+  <h2 class="display gold-text" style="font-size: clamp(1.8rem, 5vw, 3.5rem); line-height: 1.05;">
+    A Wall of<br/>Mothers
+  </h2>
+  <div class="cover-flourish" style="margin: 2vh 0 4vh;">Mothers of Faith — Through the Ages</div>
+
+  <div id="tribute-card" class="tribute-card">
+    <div class="tribute-name" id="tribute-name">—</div>
+    <div class="tribute-virtue" id="tribute-virtue">—</div>
+    <div class="tribute-message" id="tribute-message">—</div>
+  </div>
+
+  <div id="tribute-counter" style="font-family: 'Bebas Neue', sans-serif; color: var(--gold-warm); letter-spacing: 0.3em; font-size: clamp(0.9rem, 1.4vw, 1rem); margin-top: 3vh;">
+    1 OF 1
+  </div>
+
+  <div class="tribute-nav" id="tribute-nav">
+    <button class="btn btn-secondary btn-small" onclick="prevTribute()">‹ Previous</button>
+    <button class="btn btn-secondary btn-small" id="tribute-auto-btn" onclick="toggleTributeAuto()">⏸ Pause Auto</button>
+    <button class="btn btn-secondary btn-small" onclick="nextTribute()">Next ›</button>
+  </div>
+
+  <button class="btn btn-secondary btn-small" onclick="skipTribute()" style="margin-top: 2vh;">Skip to Wrap-Up →</button>
+</section>
+
+<!-- TECH CHECK — accessible via ?check=1 URL param -->
+<section class="screen" id="s-techcheck">
+  <div style="max-width: 920px; width: 100%;">
+    <h1 class="display gold-text" style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1vh;">
+      Tech Check
+    </h1>
+    <div class="cover-flourish" style="margin-bottom: 4vh;">Verify Everything Before Sunday</div>
+
+    <div class="check-grid" id="check-grid">
+      <!-- Filled in by JS -->
+    </div>
+
+    <div style="margin-top: 4vh; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <button class="btn btn-small" onclick="runAllChecks()">▶ Run All Checks</button>
+      <button class="btn btn-secondary btn-small" onclick="window.location.search='';">← Exit Tech Check</button>
+    </div>
+  </div>
+</section>
+
+<!-- 15. WRAP-UP -->
+<section class="screen" id="s-wrap" data-step="14">
+  <div style="font-size: clamp(3rem, 8vh, 5rem); margin-bottom: 1vh;">💛</div>
+  <h2 class="display gold-text" style="font-size: clamp(2rem, 5.5vw, 4rem);">We Honor Them</h2>
+  <div class="verse-card">
+    <p class="verse-text">
+      "They had been taught by their mothers, that if they did not doubt,
+      God would deliver them. And they rehearsed unto me the words of their mothers, saying:
+      <em>We do not doubt our mothers knew it.</em>"
+    </p>
+    <p class="verse-cite">— Alma 56:47–48</p>
+  </div>
+  <h3 class="happy-mothers gold-text">Happy Mother's Day</h3>
+  <button class="btn btn-secondary btn-small" onclick="restart()" style="margin-top: 4vh;">↻ Start Over</button>
+</section>
+
+<!-- ============= PERSISTENT UI ============= -->
+
+<!-- Section pip -->
+<div class="section-pip" id="section-pip"></div>
+
+<!-- Scoreboard (game show only) -->
+<div class="scoreboard hidden" id="scoreboard">
+  <div class="team-card team-a-card">
+    <div class="team-name" id="team-a-name">TEAM HELAMAN</div>
+    <div class="team-score" id="team-a-score">0</div>
+    <div class="score-adjust">
+      <button onclick="award('a',-5)">−5</button>
+      <button onclick="award('a',5)">+5</button>
+      <button onclick="award('a',10)">+10</button>
+    </div>
+  </div>
+  <div class="vs">VS</div>
+  <div class="team-card team-b-card">
+    <div class="team-name" id="team-b-name">TEAM LEHI</div>
+    <div class="team-score" id="team-b-score">0</div>
+    <div class="score-adjust">
+      <button onclick="award('b',-5)">−5</button>
+      <button onclick="award('b',5)">+5</button>
+      <button onclick="award('b',10)">+10</button>
+    </div>
+  </div>
+</div>
+
+<!-- Back button (display-mode only — hidden in host-mode via CSS) -->
+<div class="nav-back">
+  <button class="ctrl-btn" onclick="goBack()" title="Back">‹</button>
+</div>
+
+<!-- Unified bottom bar (host-mode = wide bar; display-mode = original corner cluster) -->
+<div class="controls">
+  <button class="ctrl-btn" id="back-btn" onclick="goBack()" title="Back">‹</button>
+  <button class="ctrl-btn" onclick="goHub()" title="Hub">⌂</button>
+  <button class="ctrl-btn" id="sound-btn" onclick="toggleSound()" title="Sound">🔊</button>
+  <button class="ctrl-btn" id="audio-test-btn" onclick="testDisplayAudio()" title="Test TV Sound">🔔</button>
+  <button class="ctrl-btn large" onclick="goNext()" title="Next">›</button>
+</div>
+
+<!-- Video Modal (shown on display in multi-device, or directly in host/single mode) -->
+<div class="video-modal" id="video-modal" aria-hidden="true">
+  <div class="video-modal-bg" onclick="closeVideo()"></div>
+  <div class="video-modal-frame">
+    <button class="video-close-btn" onclick="closeVideo()" aria-label="Close video">×</button>
+    <iframe id="video-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    <div class="video-caption">Tap outside the video or press × to close</div>
+  </div>
+</div>
+
+<!-- Video Host Indicator (host phone shows this while video plays on display) -->
+<div class="video-host-indicator" id="video-host-indicator" aria-hidden="true">
+  <div class="host-icon">📺</div>
+  <div class="host-headline gold-text">Now Playing on TV</div>
+  <p class="host-sub">The story video is playing for the kids. Tap below when it's done.</p>
+  <button class="btn" onclick="closeVideo()">✓ Video Finished</button>
+</div>
+
+<!-- Display-mode audio unlock overlay (one-time tap to enable sound on TV/laptop) -->
+<div class="audio-unlock-overlay" id="audio-unlock" style="display:none;">
+  <div class="audio-unlock-card">
+    <div style="font-size: clamp(4rem, 10vh, 7rem); margin-bottom: 2vh;">🔔</div>
+    <h2 class="display gold-text" style="font-size: clamp(1.6rem, 4vw, 2.6rem); margin-bottom: 1.5vh;">
+      Enable Sound for the Show
+    </h2>
+    <p style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: clamp(1.05rem, 2vw, 1.4rem); color: var(--parchment-soft); max-width: 32ch; margin: 0 auto 4vh;">
+      Tap below to enable battle drums, war horns, and music on this device.
+    </p>
+    <button class="btn" id="audio-unlock-btn">▶ Enable Sound</button>
+  </div>
+</div>
+
+<!-- Confetti -->
+<canvas id="confetti-canvas"></canvas>
+
+<script>
+/* ================================================
+   FIREBASE_CONFIG — EDIT THIS BLOCK
+   Paste your Firebase project's config from
+   Firebase Console → Project Settings → Your apps
+   ================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAa-V12j-ASGLqpcDU4MN-20uTzsxMh6sk",
+  authDomain: "church-lessons-24392.firebaseapp.com",
+  projectId: "church-lessons-24392",
+  storageBucket: "church-lessons-24392.firebasestorage.app",
+  messagingSenderId: "122319599653",
+  appId: "1:122319599653:web:7719cd478da5d40b59a7cc",
+};
+/* Firestore rules to add (Firebase Console → Firestore → Rules):
+   match /sessions/{room} { allow read, write: if true; }
+   This is fine for a one-time church activity. Tighten later if you want.
+*/
+
+/* ================================================
+   MODE DETECTION (URL params)
+   ================================================ */
+const URLPARAMS = new URLSearchParams(window.location.search);
+let MODE = URLPARAMS.get('mode');   // null | 'host' | 'display'
+let ROOM = URLPARAMS.get('room');   // 4-letter room code
+const PARAMLESS = !MODE;
+
+/* Generate a fresh room code on the setup screen if none provided */
+function makeRoomCode() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no I/O/0/1 to avoid confusion
+  let s = '';
+  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+if (!ROOM) ROOM = makeRoomCode();
+
+/* ================================================
+   FIREBASE STATE
+   ================================================ */
+let fbApp = null, fbDb = null, fbDoc = null;
+let firebaseReady = false;
+let unsubscribeListener = null;
+let lastSyncedScoreA = 0, lastSyncedScoreB = 0; // for confetti diffs in display mode
+let lastSoundCueCounter = 0; // for cross-device sound dispatch
+
+function getQueryLink(mode) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('mode', mode);
+  url.searchParams.set('room', ROOM);
+  return url.toString();
+}
+
+function setConnPill(connected, text) {
+  const pill = document.getElementById('conn-pill');
+  pill.style.display = '';
+  pill.classList.toggle('disconnected', !connected);
+  document.getElementById('conn-text').textContent = text;
+}
+
+async function initFirebase() {
+  if (firebaseReady) return;
+  // Wait for the firebase-ready event if module hasn't loaded yet
+  if (!window.firebaseAPI) {
+    await new Promise(res => window.addEventListener('firebase-ready', res, { once: true }));
+  }
+  try {
+    const { initializeApp, getFirestore, doc } = window.firebaseAPI;
+    fbApp = initializeApp(FIREBASE_CONFIG);
+    fbDb = getFirestore(fbApp);
+    fbDoc = doc(fbDb, 'sessions', ROOM);
+    firebaseReady = true;
+    setConnPill(true, `ROOM ${ROOM}`);
+  } catch (err) {
+    console.error('Firebase init failed:', err);
+    setConnPill(false, 'NO CONFIG — see code');
+  }
+}
+
+/* ================================================
+   STATE SYNC
+   ================================================ */
+let syncDebounceTimer = null;
+function syncState() {
+  if (MODE !== 'host' || !firebaseReady) return;
+  // Debounce by 80ms to coalesce rapid changes
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(_doSync, 80);
+}
+async function _doSync() {
+  if (!firebaseReady) return;
+  const { setDoc, serverTimestamp } = window.firebaseAPI;
+  const payload = {
+    step: state.step,
+    scoreA: state.scoreA,
+    scoreB: state.scoreB,
+    armorRevealed: state.armorRevealed,
+    r1Index: state.r1Index,
+    r1AnswerShown: state.r1AnswerShown,
+    r1WrongTeam: state.r1WrongTeam || null,
+    r2Index: state.r2Index,
+    r2RevealedIndices: state.r2RevealedIndices || [],
+    r2ActiveStrikes: state.r2ActiveStrikes || [],
+    r3Index: state.r3Index,
+    r3Locked: state.r3Locked,
+    r3PickedIndex: typeof state.r3PickedIndex === 'number' ? state.r3PickedIndex : -1,
+    r3WrongPicks: state.r3WrongPicks || [],
+    timerSecondsLeft: state.timerSecondsLeft,
+    timerRunning: state.timerRunning,
+    roundsDone: state.roundsDone,
+    tributeIndex: state.tributeIndex || 0,
+    videoPlaying: !!state.videoPlaying,
+    soundCue: state.soundCue || null,
+    soundCueCounter: state.soundCueCounter || 0,
+    bgMusic: state.bgMusic || null,
+    teamAName: CONFIG.teamAName,
+    teamBName: CONFIG.teamBName,
+    lastUpdated: serverTimestamp(),
+  };
+  try {
+    await setDoc(fbDoc, payload);
+  } catch (err) {
+    console.error('Sync failed:', err);
+    setConnPill(false, 'SYNC ERROR');
+  }
+}
+
+function startListening() {
+  if (!firebaseReady) return;
+  const { onSnapshot } = window.firebaseAPI;
+  unsubscribeListener = onSnapshot(fbDoc,
+    (snap) => {
+      if (!snap.exists()) {
+        setConnPill(true, `WAITING — ROOM ${ROOM}`);
+        return;
+      }
+      setConnPill(true, `LIVE — ROOM ${ROOM}`);
+      applyRemoteState(snap.data());
+    },
+    (err) => {
+      console.error('Snapshot error:', err);
+      setConnPill(false, 'CONNECTION LOST');
+    }
+  );
+}
+
+function applyRemoteState(s) {
+  // Detect deltas BEFORE updating local state — used for celebrations
+  const prevStep = state.step;
+  const scoreAUp = (s.scoreA || 0) > lastSyncedScoreA;
+  const scoreBUp = (s.scoreB || 0) > lastSyncedScoreB;
+  const prevR2RevealedCount = (state.r2RevealedIndices || []).length;
+  const prevArmorRevealed = state.armorRevealed || 0;
+  const prevR3Locked = !!state.r3Locked;
+  const prevR1AnswerShown = !!state.r1AnswerShown;
+  const newStep = (typeof s.step === 'number') ? s.step : 0;
+  const stepChanged = newStep !== prevStep;
+
+  // Update local state object
+  state.scoreA = s.scoreA || 0;
+  state.scoreB = s.scoreB || 0;
+  state.armorRevealed = s.armorRevealed || 0;
+  state.r1Index = s.r1Index || 0;
+  state.r1AnswerShown = !!s.r1AnswerShown;
+  state.r1WrongTeam = s.r1WrongTeam || null;
+  state.r2Index = s.r2Index || 0;
+  state.r2RevealedIndices = s.r2RevealedIndices || [];
+  state.r2ActiveStrikes = s.r2ActiveStrikes || [];
+  state.r3Index = s.r3Index || 0;
+  state.r3Locked = !!s.r3Locked;
+  state.r3PickedIndex = typeof s.r3PickedIndex === 'number' ? s.r3PickedIndex : -1;
+  state.r3WrongPicks = s.r3WrongPicks || [];
+  state.timerSecondsLeft = typeof s.timerSecondsLeft === 'number' ? s.timerSecondsLeft : 600;
+  state.timerRunning = !!s.timerRunning;
+  state.roundsDone = s.roundsDone || { 1: false, 2: false, 3: false };
+  state.tributeIndex = typeof s.tributeIndex === 'number' ? s.tributeIndex : 0;
+  state.videoPlaying = !!s.videoPlaying;
+
+  // Display: open/close video modal based on host's videoPlaying flag
+  if (MODE === 'display') {
+    const modal = document.getElementById('video-modal');
+    const isShown = modal.classList.contains('shown');
+    if (state.videoPlaying && !isShown) _showVideoModal();
+    else if (!state.videoPlaying && isShown) _hideVideoModal();
+  }
+
+  if (s.teamAName) document.getElementById('team-a-name').textContent = s.teamAName;
+  if (s.teamBName) document.getElementById('team-b-name').textContent = s.teamBName;
+
+  // Navigate to the requested step (this will run setupR1/R2/R3 etc which reset DOM and
+  // can overwrite state.r1AnswerShown / r2RevealedIndices / r3Locked / r3PickedIndex / armorRevealed
+  // because those setup functions are designed for host-driven round transitions.
+  // Capture the synced values, navigate, then restore the synced values before rendering.
+  const captured = {
+    armorRevealed: state.armorRevealed,
+    r1AnswerShown: state.r1AnswerShown,
+    r1WrongTeam: state.r1WrongTeam,
+    r2RevealedIndices: state.r2RevealedIndices.slice(),
+    r2ActiveStrikes: state.r2ActiveStrikes.slice(),
+    r3Locked: state.r3Locked,
+    r3PickedIndex: state.r3PickedIndex,
+    r3WrongPicks: state.r3WrongPicks.slice(),
+  };
+  showStep(newStep, /*remote*/ true);
+  // Restore captured state (setupRX may have reset some of these to defaults)
+  state.armorRevealed = captured.armorRevealed;
+  state.r1AnswerShown = captured.r1AnswerShown;
+  state.r1WrongTeam = captured.r1WrongTeam;
+  state.r2RevealedIndices = captured.r2RevealedIndices;
+  state.r2ActiveStrikes = captured.r2ActiveStrikes;
+  state.r3Locked = captured.r3Locked;
+  state.r3PickedIndex = captured.r3PickedIndex;
+  state.r3WrongPicks = captured.r3WrongPicks;
+
+  // After every state update, re-render visual state from the source of truth.
+  renderRemoteVisualState();
+
+  // ============= DISPLAY-ONLY: SOUND CUES + BG MUSIC + CONFETTI =============
+  if (MODE === 'display') {
+    // SOUND CUE: host fires explicit cues via state.soundCue + counter
+    const newCounter = s.soundCueCounter || 0;
+    if (newCounter > lastSoundCueCounter && s.soundCue) {
+      _playSoundCueLocal(s.soundCue);
+    }
+    lastSoundCueCounter = newCounter;
+
+    // BG MUSIC: host sets state.bgMusic to 'wallofmothers'/'wrap'/null
+    syncBgMusic(s.bgMusic || null);
+
+    // Score change → confetti + bump
+    if (scoreAUp) { confettiBurst('a'); bumpScore('a'); }
+    if (scoreBUp) { confettiBurst('b'); bumpScore('b'); }
+
+    // Round 3 — card just got picked correctly → gold confetti
+    if (state.r3Locked && !prevR3Locked && STEPS[state.step] === 's-r3') {
+      confettiBurst('gold');
+    }
+
+    // Armor: when last cry line lands → confetti finale
+    if (state.armorRevealed === 3 && prevArmorRevealed < 3 && STEPS[state.step] === 's-armor') {
+      setTimeout(() => confettiBurst('gold'), 600);
+    }
+
+    // Step changed → finale celebration
+    if (stepChanged && STEPS[newStep] === 's-finale') {
+      setTimeout(() => confettiBurst('gold'), 300);
+    }
+  }
+
+  updateScores();
+  updateHubCards();
+
+  lastSyncedScoreA = state.scoreA;
+  lastSyncedScoreB = state.scoreB;
+}
+
+/* Bump score animation (used on display when scores change remotely) */
+function bumpScore(team) {
+  const id = team === 'a' ? 'team-a-score' : 'team-b-score';
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('bump');
+  setTimeout(() => el.classList.remove('bump'), 300);
+}
+
+/* Render all visual state derived from the state object.
+   Called after every Firestore snapshot on the display, and also can be
+   called locally on host after setupR1/R2/R3 to ensure visuals match state.
+   This is the SINGLE SOURCE OF TRUTH for translating state → DOM. */
+function renderRemoteVisualState() {
+  const screen = STEPS[state.step];
+
+  // ======= ARMOR / BATTLE CRY =======
+  if (screen === 's-armor') {
+    // First, reset all 3 lines to hidden
+    ['armor-1','armor-2','armor-3'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('shown');
+    });
+    // Then reveal the lines that should be shown
+    for (let i = 1; i <= state.armorRevealed; i++) {
+      const el = document.getElementById(`armor-${i}`);
+      if (el) el.classList.add('shown');
+    }
+    // Tap prompt vs after-prompt (for host only — display doesn't show these per CSS rules)
+    const after = document.getElementById('armor-after');
+    const tapPrompt = document.getElementById('armor-tap');
+    if (state.armorRevealed >= 3) {
+      if (after) after.classList.remove('hidden');
+      if (tapPrompt) tapPrompt.classList.add('hidden');
+    } else {
+      if (after) after.classList.add('hidden');
+      if (tapPrompt) tapPrompt.classList.remove('hidden');
+    }
+  }
+
+  // ======= ROUND 1: TRIVIA =======
+  if (screen === 's-r1') {
+    const ans = document.getElementById('r1-answer');
+    if (ans) {
+      if (state.r1AnswerShown) ans.classList.add('shown');
+      else ans.classList.remove('shown');
+    }
+    // X marks for wrong-team indicators
+    const wt = state.r1WrongTeam;
+    const xa = document.getElementById('r1-x-a');
+    const xb = document.getElementById('r1-x-b');
+    if (xa) xa.classList.toggle('shown', wt === 'a' || wt === 'both');
+    if (xb) xb.classList.toggle('shown', wt === 'b' || wt === 'both');
+  }
+
+  // ======= ROUND 2: FEUD =======
+  if (screen === 's-r2') {
+    // Reveal rows that should be revealed
+    document.querySelectorAll('#feud-board .feud-row').forEach(row => {
+      const idx = parseInt(row.dataset.idx, 10);
+      if (state.r2RevealedIndices.includes(idx)) {
+        row.classList.remove('concealed');
+        row.classList.add('revealed');
+      } else {
+        row.classList.remove('revealed');
+        row.classList.add('concealed');
+      }
+    });
+    // Apply strikes
+    [1, 2, 3].forEach(n => {
+      const el = document.getElementById('strike-' + n);
+      if (el) el.classList.toggle('active', state.r2ActiveStrikes.includes(n));
+    });
+  }
+
+  // ======= ROUND 3: MATCH THE MOTHER =======
+  if (screen === 's-r3') {
+    const cards = document.querySelectorAll('#r3-options .mom-card');
+    // Reset all card states first
+    cards.forEach((c) => {
+      c.classList.remove('correct', 'wrong', 'wrong-pick', 'revealed');
+    });
+    // Apply X marks for wrong picks (multi-pick mechanic)
+    (state.r3WrongPicks || []).forEach(wrongIdx => {
+      if (cards[wrongIdx]) cards[wrongIdx].classList.add('wrong-pick');
+    });
+    // If correct pick made (locked), reveal correct card
+    if (state.r3Locked) {
+      cards.forEach((c) => {
+        if (c.dataset.correct === 'true') {
+          c.classList.add('correct', 'revealed');
+        }
+      });
+    }
+  }
+
+  // ======= CRAFT TIMER =======
+  if (screen === 's-craft') {
+    updateTimerDisplay();
+  }
+
+  // ======= WALL OF MOTHERS =======
+  if (screen === 's-tribute') {
+    showTribute();
+  }
+}
+
+/* ================================================
+   CONFIG — EDIT THIS BLOCK
+   ================================================ */
+const CONFIG = {
+  // The official Church-produced "Helaman's Stripling Soldiers Fight for Freedom"
+  // from the Book of Mormon Videos series (2024). Dramatizes Alma 53–58.
+  videoUrl: "https://www.youtube.com/watch?v=Ier5YL8Y7os",
+
+  // Clip the video to just the relevant scene. Both in seconds.
+  // - videoStart: when to begin playback (e.g., 165 = 2:45)
+  // - videoEnd: when to stop (e.g., 330 = 5:30); set to null to play to the end
+  // To find timestamps: open the YouTube video, scrub to the warriors-volunteering scene,
+  // and right-click the video for "Copy video URL at current time."
+  // Recommended scene: warriors stepping forward to volunteer + mothers' teaching.
+  // SET THESE BEFORE SUNDAY — defaults below are placeholders.
+  videoStart: 816,    // 13:36 — start of warriors-volunteering scene
+  videoEnd: 865,      // 14:25 — end of scene
+
+  teamAName: "TEAM HELAMAN",
+  teamBName: "TEAM LEHI",
+
+  trivia: [
+    { q: "How many young men joined Helaman's army?",
+      a: "2,000 — and 60 more joined later (2,060 total)" },
+    { q: "What did their mothers teach them?",
+      a: "That if they did not doubt, God would deliver them." },
+    { q: "How many of them died in their first big battle?",
+      a: "ZERO. Every one was wounded, but not one was killed." },
+    { q: "What did Helaman call these young warriors?",
+      a: "He called them 'my sons.'" },
+    { q: "Finish the verse: 'We do not doubt our mothers ___'",
+      a: "'…knew it.' (Alma 56:48)" },
+  ],
+
+  // Survey 8–10 ward moms by text in advance for these.
+  // Top answers get the most points (highest = #1).
+  feud: [
+    {
+      prompt: "Top 5 things moms in our ward say almost every day",
+      answers: [
+        { text: "I love you",            pts: 32 },
+        { text: "Did you do your chores?", pts: 24 },
+        { text: "Be kind to each other",   pts: 18 },
+        { text: "Have you eaten?",         pts: 14 },
+        { text: "Say your prayers",        pts: 12 },
+      ],
+    },
+    {
+      prompt: "Top 5 things moms hope their kids learn",
+      answers: [
+        { text: "How to be kind",          pts: 30 },
+        { text: "Faith in Jesus Christ",   pts: 26 },
+        { text: "How to work hard",        pts: 18 },
+        { text: "How to forgive",          pts: 14 },
+        { text: "How to cook for themselves", pts: 12 },
+      ],
+    },
+    {
+      prompt: "Top 5 ways moms show love",
+      answers: [
+        { text: "Cooking favorite meals",  pts: 28 },
+        { text: "Hugs",                    pts: 24 },
+        { text: "Listening to us",         pts: 20 },
+        { text: "Driving us everywhere",   pts: 16 },
+        { text: "Praying for us",          pts: 12 },
+      ],
+    },
+  ],
+
+  matchMom: [
+    {
+      prompt: "I trusted God when I was asked to be the mother of the Savior of the world.",
+      options: [
+        { name: "Mary", correct: true, fact: "Mother of Jesus — Luke 1:38" },
+        { name: "Eve", fact: "First mother of all living" },
+        { name: "Sariah", fact: "Mother of Nephi" },
+      ],
+    },
+    {
+      prompt: "I am the mother of all living. I taught my children about the joy of redemption.",
+      options: [
+        { name: "Hannah", fact: "Mother of Samuel" },
+        { name: "Eve", correct: true, fact: "Genesis 3 / Moses 5:11" },
+        { name: "Mary", fact: "Mother of Jesus" },
+      ],
+    },
+    {
+      prompt: "I hid my baby in a basket on the river so that he might live to deliver Israel.",
+      options: [
+        { name: "Sariah", fact: "Mother of Nephi" },
+        { name: "Elisabeth", fact: "Mother of John the Baptist" },
+        { name: "Jochebed", correct: true, fact: "Mother of Moses — Exodus 2" },
+      ],
+    },
+    {
+      prompt: "I prayed for years for a child, and when God gave me a son, I gave him back to the Lord's service.",
+      options: [
+        { name: "Hannah", correct: true, fact: "Mother of Samuel — 1 Samuel 1" },
+        { name: "Mary", fact: "Mother of Jesus" },
+        { name: "Sariah", fact: "Mother of Nephi" },
+      ],
+    },
+    {
+      prompt: "I taught my sons that if they did not doubt, God would deliver them.",
+      options: [
+        { name: "Eve", fact: "Mother of all living" },
+        { name: "Mother of Helaman's Stripling Warriors", correct: true, fact: "Alma 56:47–48 — that's US today!" },
+        { name: "Elisabeth", fact: "Mother of John the Baptist" },
+      ],
+    },
+  ],
+
+  // ============================================
+  // WALL OF MOTHERS — auto-cycling parchment cards
+  // ============================================
+  // Scripture mothers, each with a virtue and a one-line story.
+  // The screen auto-cycles through them; after the last, advances to wrap-up.
+  // Adjust tributeIntervalMs below to slow or speed the pacing.
+  tributes: [
+    {
+      name: "Eve",
+      virtue: "Courage",
+      message: "Mother of all living. She faced the unknown so that we might be."
+    },
+    {
+      name: "Sarah",
+      virtue: "Patience",
+      message: "She waited a lifetime for the promise — and laughed when it came true."
+    },
+    {
+      name: "Jochebed",
+      virtue: "Trust",
+      message: "She placed her son in a basket on the river and trusted God with the current."
+    },
+    {
+      name: "Hannah",
+      virtue: "Devotion",
+      message: "She prayed for years for a son — and gave him back to the Lord's service."
+    },
+    {
+      name: "Mary",
+      virtue: "Faith",
+      message: "Asked to be the mother of the Savior, she answered: 'Be it unto me according to thy word.'"
+    },
+    {
+      name: "Elisabeth",
+      virtue: "Joy",
+      message: "When the Spirit confirmed her cousin's calling, she rejoiced before all the world."
+    },
+    {
+      name: "Sariah",
+      virtue: "Endurance",
+      message: "She left everything she knew to follow her family into the wilderness."
+    },
+    {
+      name: "Mothers of the Stripling Warriors",
+      virtue: "Conviction",
+      message: "They taught their sons that if they did not doubt, God would deliver them — and 2,060 came home."
+    },
+    {
+      name: "Your Mother",
+      virtue: "Love",
+      message: "She is teaching you, every day, the things you will not doubt."
+    },
+  ],
+
+  // Auto-cycle interval in milliseconds (default 6000 = 6 seconds per card)
+  tributeIntervalMs: 6000,
+};
+
+/* ================================================
+   STATE
+   ================================================ */
+const STEPS = [
+  's-cover',
+  's-sing-intro', 's-sing-warrior', 's-sing-bridge',
+  's-briefing',
+  's-story-1', 's-story-2', 's-story-3', 's-story-4', 's-story-5',
+  's-video-moment',
+  's-armor',
+  's-hub',
+  's-r1', 's-r2', 's-r3',
+  's-finale',
+  's-craft',
+  's-tribute',
+  's-wrap'
+];
+
+let state = {
+  step: 0,
+  scoreA: 0,
+  scoreB: 0,
+  soundOn: true,
+  armorRevealed: 0,
+  r1Index: 0, r1AnswerShown: false, r1WrongTeam: null,
+  r2Index: 0, r2Strikes: 0, r2Revealed: 0,
+  r2RevealedIndices: [], r2ActiveStrikes: [],
+  r3Index: 0, r3Locked: false, r3PickedIndex: -1, r3WrongPicks: [],
+  roundsDone: { 1: false, 2: false, 3: false },
+  timerSecondsLeft: 600, timerRunning: false, timerInterval: null,
+  tributeIndex: 0, tributeTimer: null, tributeAuto: true,
+  videoPlaying: false,
+  soundCue: null,        // last sound cue name
+  soundCueCounter: 0,    // increments each time a cue is fired (for change detection)
+  bgMusic: null,         // 'wallofmothers' | 'wrap' | null
+};
+
+const SECTION_COUNT = 15;
+
+/* ================================================
+   NAV
+   ================================================ */
+function showStep(i, remote) {
+  if (i < 0) i = 0;
+  if (i >= STEPS.length) i = STEPS.length - 1;
+  state.step = i;
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(STEPS[i]);
+  if (target) target.classList.add('active');
+
+  // scoreboard visible only during game show
+  const showScore = i >= 12 && i <= 15; // hub, r1, r2, r3
+  document.getElementById('scoreboard').classList.toggle('hidden', !showScore);
+
+  // section pips
+  renderPips();
+
+  // round-specific setup
+  if (STEPS[i] === 's-r1') setupR1();
+  if (STEPS[i] === 's-r2') setupR2();
+  if (STEPS[i] === 's-r3') setupR3();
+  if (STEPS[i] === 's-armor') resetArmor();
+  if (STEPS[i] === 's-hub') updateHubCards();
+  if (STEPS[i] === 's-finale') showFinale();
+  if (STEPS[i] === 's-craft') resetTimer();
+  if (STEPS[i] === 's-tribute') startTribute();
+  if (STEPS[i] !== 's-tribute' && state.tributeTimer) {
+    clearInterval(state.tributeTimer);
+    state.tributeTimer = null;
+  }
+
+  // BG MUSIC management — start/stop based on screen
+  // (only the host or single-device drives the bgMusic state; display syncs from it)
+  if (MODE !== 'display') {
+    if (STEPS[i] === 's-tribute') {
+      if (state.bgMusic !== 'wallofmothers') setBgMusic('wallofmothers');
+    } else if (STEPS[i] === 's-wrap') {
+      if (state.bgMusic !== 'wrap') setBgMusic('wrap');
+    } else {
+      if (state.bgMusic) setBgMusic(null);
+    }
+  }
+}
+
+function goNext() {
+  // From hub, skip ahead to finale (rounds are entered via cards)
+  if (STEPS[state.step] === 's-hub') {
+    return goToFinale();
+  }
+  // Inside rounds, "Next" advances within the round
+  if (STEPS[state.step] === 's-r1') return r1Next();
+  if (STEPS[state.step] === 's-r2') return r2Next();
+  if (STEPS[state.step] === 's-r3') return r3Next();
+  showStep(state.step + 1);
+}
+function goBack() {
+  if (STEPS[state.step] === 's-r1' || STEPS[state.step] === 's-r2' || STEPS[state.step] === 's-r3') {
+    return goHub();
+  }
+  showStep(state.step - 1);
+}
+function goHub() {
+  showStep(STEPS.indexOf('s-hub'));
+}
+function goToFinale() {
+  showStep(STEPS.indexOf('s-finale'));
+}
+function enterRound(n) {
+  fanfare();
+  if (n === 1) showStep(STEPS.indexOf('s-r1'));
+  if (n === 2) showStep(STEPS.indexOf('s-r2'));
+  if (n === 3) showStep(STEPS.indexOf('s-r3'));
+}
+function restart() {
+  state.scoreA = 0; state.scoreB = 0;
+  state.r1Index = state.r1AnswerShown = 0;
+  state.r2Index = state.r2Strikes = state.r2Revealed = 0;
+  state.r3Index = 0; state.r3Locked = false;
+  state.roundsDone = { 1: false, 2: false, 3: false };
+  updateScores();
+  showStep(0);
+}
+
+/* ================================================
+   PIPS
+   ================================================ */
+function renderPips() {
+  const container = document.getElementById('section-pip');
+  // STEPS: cover(0), sing(1-3), briefing(4), story(5-9), video(10), armor(11), hub(12), r1(13), r2(14), r3(15), finale(16), craft(17), tribute(18), wrap(19)
+  const groups = [
+    { range: [0,0],   label: 'cover' },
+    { range: [1,3],   label: 'singing' },
+    { range: [4,4],   label: 'briefing' },
+    { range: [5,9],   label: 'story' },
+    { range: [10,10], label: 'video' },
+    { range: [11,11], label: 'armor' },
+    { range: [12,15], label: 'game' },
+    { range: [16,16], label: 'finale' },
+    { range: [17,17], label: 'craft' },
+    { range: [18,18], label: 'tribute' },
+    { range: [19,19], label: 'wrap' },
+  ];
+  let html = '';
+  groups.forEach((g, idx) => {
+    let cls = 'pip';
+    if (state.step > g.range[1]) cls += ' done';
+    else if (state.step >= g.range[0] && state.step <= g.range[1]) cls += ' active';
+    html += `<div class="${cls}" title="${g.label}"></div>`;
+  });
+  container.innerHTML = html;
+}
+
+/* ================================================
+   SCORES
+   ================================================ */
+function award(team, pts) {
+  if (team === 'a') state.scoreA = Math.max(0, state.scoreA + pts);
+  else state.scoreB = Math.max(0, state.scoreB + pts);
+  updateScores(team);
+  if (pts > 0) { ding(); confettiBurst(team === 'a' ? 'a' : 'b'); }
+}
+function updateScores(bumpTeam) {
+  const sa = document.getElementById('team-a-score');
+  const sb = document.getElementById('team-b-score');
+  sa.textContent = state.scoreA;
+  sb.textContent = state.scoreB;
+  if (bumpTeam === 'a') { sa.classList.add('bump'); setTimeout(()=>sa.classList.remove('bump'), 300); }
+  if (bumpTeam === 'b') { sb.classList.add('bump'); setTimeout(()=>sb.classList.remove('bump'), 300); }
+}
+
+/* ================================================
+   WALL OF MOTHERS
+   ================================================ */
+function startTribute() {
+  const tributes = CONFIG.tributes || [];
+  if (tributes.length === 0) {
+    setTimeout(() => goNext(), 50);
+    return;
+  }
+  // Display mode renders whatever index host pushes — never auto-cycles
+  if (MODE === 'display') {
+    showTribute();
+    return;
+  }
+  state.tributeIndex = 0;
+  state.tributeAuto = true; // auto-cycle ON by default
+  showTribute();
+  startTributeTimer();
+  updateTributeAutoBtn();
+}
+
+function startTributeTimer() {
+  if (state.tributeTimer) clearInterval(state.tributeTimer);
+  if (!state.tributeAuto) return;
+  state.tributeTimer = setInterval(advanceTribute, CONFIG.tributeIntervalMs || 6000);
+}
+
+function stopTributeTimer() {
+  if (state.tributeTimer) clearInterval(state.tributeTimer);
+  state.tributeTimer = null;
+}
+
+function showTribute() {
+  const tributes = CONFIG.tributes || [];
+  if (state.tributeIndex >= tributes.length) return;
+  const t = tributes[state.tributeIndex];
+  const card = document.getElementById('tribute-card');
+  card.classList.add('fading');
+  setTimeout(() => {
+    document.getElementById('tribute-name').textContent = t.name || '';
+    const virtueEl = document.getElementById('tribute-virtue');
+    if (virtueEl) virtueEl.textContent = t.virtue || '';
+    document.getElementById('tribute-message').textContent = t.message || '';
+    document.getElementById('tribute-counter').textContent = `${state.tributeIndex + 1} OF ${tributes.length}`;
+    card.classList.remove('fading');
+  }, 380);
+}
+
+function advanceTribute() {
+  // Auto-cycle: stop at last card (don't auto-advance to wrap)
+  const tributes = CONFIG.tributes || [];
+  if (state.tributeIndex >= tributes.length - 1) {
+    // Stay on the final card; turn off auto so host can manually advance to wrap
+    state.tributeAuto = false;
+    stopTributeTimer();
+    updateTributeAutoBtn();
+    return;
+  }
+  state.tributeIndex++;
+  showTribute();
+  syncState && syncState();
+}
+
+function nextTribute() {
+  const tributes = CONFIG.tributes || [];
+  if (state.tributeIndex >= tributes.length - 1) {
+    // Already on last — go to wrap
+    skipTribute();
+    return;
+  }
+  state.tributeIndex++;
+  showTribute();
+  // Reset auto timer so user has full interval to read the next one
+  if (state.tributeAuto) startTributeTimer();
+  syncState && syncState();
+}
+
+function prevTribute() {
+  if (state.tributeIndex <= 0) return;
+  state.tributeIndex--;
+  showTribute();
+  if (state.tributeAuto) startTributeTimer();
+  syncState && syncState();
+}
+
+function toggleTributeAuto() {
+  state.tributeAuto = !state.tributeAuto;
+  if (state.tributeAuto) {
+    startTributeTimer();
+  } else {
+    stopTributeTimer();
+  }
+  updateTributeAutoBtn();
+}
+
+function updateTributeAutoBtn() {
+  const btn = document.getElementById('tribute-auto-btn');
+  if (!btn) return;
+  btn.textContent = state.tributeAuto ? '⏸ Pause Auto' : '▶ Resume Auto';
+}
+
+function skipTribute() {
+  stopTributeTimer();
+  goNext();
+}
+
+/* ================================================
+   ARMOR UP
+   ================================================ */
+function resetArmor() {
+  state.armorRevealed = 0;
+  ['armor-1','armor-2','armor-3'].forEach(id =>
+    document.getElementById(id).classList.remove('shown'));
+  document.getElementById('armor-after').classList.add('hidden');
+  document.getElementById('armor-tap').classList.remove('hidden');
+}
+function tapArmor() {
+  if (state.armorRevealed >= 3) return;
+  state.armorRevealed++;
+  document.getElementById(`armor-${state.armorRevealed}`).classList.add('shown');
+  drum();
+  if (state.armorRevealed === 3) {
+    setTimeout(() => {
+      document.getElementById('armor-after').classList.remove('hidden');
+      document.getElementById('armor-tap').classList.add('hidden');
+      confettiBurst('gold');
+    }, 800);
+  }
+}
+document.getElementById('s-armor').addEventListener('click', (e) => {
+  // Only trigger if click hits the screen background (not a button)
+  if (e.target.closest('button')) return;
+  if (state.armorRevealed < 3) tapArmor();
+});
+
+/* ================================================
+   HUB
+   ================================================ */
+function updateHubCards() {
+  ['1','2','3'].forEach(n => {
+    const card = document.getElementById('card-r' + n);
+    card.classList.toggle('completed', !!state.roundsDone[n]);
+  });
+}
+
+/* ================================================
+   ROUND 1 — TRIVIA
+   ================================================ */
+function setupR1() {
+  state.r1AnswerShown = false;
+  state.r1WrongTeam = null;  // 'a' | 'b' | 'both' | null
+  loadR1();
+}
+function loadR1() {
+  const item = CONFIG.trivia[state.r1Index];
+  document.getElementById('r1-counter').textContent = `QUESTION ${state.r1Index + 1} OF ${CONFIG.trivia.length}`;
+  document.getElementById('r1-prompt').textContent = item.q;
+  document.getElementById('r1-answer').textContent = item.a;
+  // Host-only answer peek text (visible only on host phone via CSS)
+  const peek = document.getElementById('r1-host-answer');
+  if (peek) peek.textContent = item.a;
+  document.getElementById('r1-answer').classList.remove('shown');
+  // Reset X marks
+  ['r1-x-a', 'r1-x-b'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('shown');
+  });
+}
+function r1MarkCorrect(team) {
+  // Award the team that got it right + reveal answer + next prompt
+  award(team, 10);
+  state.r1AnswerShown = true;
+  document.getElementById('r1-answer').classList.add('shown');
+  // Sound: chime
+  ding();
+  // Push state, then advance after a beat
+  if (typeof syncState === 'function') syncState();
+  setTimeout(() => r1Next(), 1800);
+}
+function r1MarkWrong(team) {
+  // Show X for that team, no reveal yet — other team can steal
+  if (state.r1WrongTeam === 'both') return;     // both already wrong, ignore
+  if (state.r1WrongTeam === team) return;        // already marked, no-op
+  if (state.r1WrongTeam && state.r1WrongTeam !== team) {
+    // Other team was wrong, now this team also wrong → both wrong
+    state.r1WrongTeam = 'both';
+  } else {
+    state.r1WrongTeam = team;
+  }
+  // Show the X mark for the team(s)
+  if (state.r1WrongTeam === 'a' || state.r1WrongTeam === 'both') {
+    document.getElementById('r1-x-a').classList.add('shown');
+  }
+  if (state.r1WrongTeam === 'b' || state.r1WrongTeam === 'both') {
+    document.getElementById('r1-x-b').classList.add('shown');
+  }
+  buzz();
+  if (typeof syncState === 'function') syncState();
+}
+function r1Reveal() {
+  state.r1AnswerShown = true;
+  document.getElementById('r1-answer').classList.add('shown');
+  ding();
+  if (typeof syncState === 'function') syncState();
+}
+function r1Next() {
+  state.r1Index++;
+  state.r1WrongTeam = null;
+  state.r1AnswerShown = false;
+  if (state.r1Index >= CONFIG.trivia.length) {
+    state.roundsDone[1] = true;
+    state.r1Index = 0;
+    fanfare();
+    setTimeout(goHub, 200);
+    return;
+  }
+  loadR1();
+  if (typeof syncState === 'function') syncState();
+}
+
+/* ================================================
+   ROUND 2 — WARD MOM FEUD
+   ================================================ */
+function setupR2() {
+  state.r2Strikes = 0;
+  state.r2Revealed = 0;
+  loadR2();
+}
+function loadR2() {
+  const item = CONFIG.feud[state.r2Index];
+  document.getElementById('r2-counter').textContent = `PROMPT ${state.r2Index + 1} OF ${CONFIG.feud.length}`;
+  document.getElementById('r2-prompt').textContent = item.prompt;
+  state.r2Revealed = 0;
+  state.r2Strikes = 0;
+  state.r2RevealedIndices = [];
+  state.r2ActiveStrikes = [];
+  // Build board
+  const board = document.getElementById('feud-board');
+  board.innerHTML = item.answers.map((a, i) => `
+    <div class="feud-row concealed" data-idx="${i}" onclick="revealFeud(${i})">
+      <div class="feud-num">${i + 1}</div>
+      <div class="feud-text-slot">${a.text}</div>
+      <div class="feud-pts">${a.pts}</div>
+    </div>
+  `).join('');
+  // Reset strikes
+  [1,2,3].forEach(s => document.getElementById('strike-'+s).classList.remove('active'));
+}
+function revealFeud(i) {
+  const row = document.querySelector(`#feud-board .feud-row[data-idx="${i}"]`);
+  if (!row || !row.classList.contains('concealed')) return;
+  row.classList.remove('concealed');
+  row.classList.add('revealed');
+  state.r2Revealed++;
+  if (!state.r2RevealedIndices.includes(i)) state.r2RevealedIndices.push(i);
+  ding();
+  if (state.r2Revealed === CONFIG.feud[state.r2Index].answers.length) {
+    fanfare();
+  }
+}
+function toggleStrike(n) {
+  const el = document.getElementById('strike-'+n);
+  el.classList.toggle('active');
+  if (el.classList.contains('active')) {
+    if (!state.r2ActiveStrikes.includes(n)) state.r2ActiveStrikes.push(n);
+    buzz();
+  } else {
+    state.r2ActiveStrikes = state.r2ActiveStrikes.filter(x => x !== n);
+  }
+}
+function getFeudPoints() {
+  // Award the sum of revealed answers' points
+  const item = CONFIG.feud[state.r2Index];
+  let sum = 0;
+  document.querySelectorAll('#feud-board .feud-row.revealed').forEach(r => {
+    const idx = parseInt(r.dataset.idx, 10);
+    sum += item.answers[idx].pts;
+  });
+  return sum;
+}
+function r2Next() {
+  state.r2Index++;
+  if (state.r2Index >= CONFIG.feud.length) {
+    state.roundsDone[2] = true;
+    state.r2Index = 0;
+    fanfare();
+    setTimeout(goHub, 200);
+    return;
+  }
+  loadR2();
+}
+
+/* ================================================
+   ROUND 3 — MATCH THE MOM
+   ================================================ */
+function setupR3() {
+  state.r3Locked = false;
+  state.r3PickedIndex = -1;
+  state.r3WrongPicks = [];
+  loadR3();
+}
+function loadR3() {
+  state.r3Locked = false;
+  state.r3PickedIndex = -1;
+  state.r3WrongPicks = [];
+  const item = CONFIG.matchMom[state.r3Index];
+  document.getElementById('r3-counter').textContent = `QUESTION ${state.r3Index + 1} OF ${CONFIG.matchMom.length}`;
+  document.getElementById('r3-prompt').innerHTML = `<span class="quote-mark">"</span>${item.prompt}<span class="quote-mark">"</span>`;
+  const optsHTML = item.options.map((o, i) => `
+    <div class="mom-card" data-correct="${!!o.correct}" onclick="pickMom(${i})">
+      <div class="mom-name">${o.name}</div>
+      <div class="mom-hint">${o.fact}</div>
+    </div>
+  `).join('');
+  document.getElementById('r3-options').innerHTML = optsHTML;
+  ['r3-pts-a','r3-pts-b','r3-skip'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+}
+function pickMom(i) {
+  if (state.r3Locked) return;
+  // If this card was already marked wrong, ignore
+  if ((state.r3WrongPicks || []).includes(i)) return;
+  const cards = document.querySelectorAll('#r3-options .mom-card');
+  const card = cards[i];
+  if (!card) return;
+  const isCorrect = card.dataset.correct === 'true';
+  if (isCorrect) {
+    // Correct pick: lock the round, reveal correct card, show award buttons
+    state.r3Locked = true;
+    state.r3PickedIndex = i;
+    cards.forEach((c) => {
+      if (c.dataset.correct === 'true') c.classList.add('correct', 'revealed');
+    });
+    ding(); confettiBurst('gold');
+    ['r3-pts-a','r3-pts-b','r3-skip'].forEach(id =>
+      document.getElementById(id).classList.remove('hidden'));
+  } else {
+    // Wrong pick: add X mark to that card, allow other team to pick
+    state.r3WrongPicks = [...(state.r3WrongPicks || []), i];
+    card.classList.add('wrong-pick');
+    buzz();
+  }
+  if (typeof syncState === 'function') syncState();
+}
+function r3Next() {
+  state.r3Index++;
+  state.r3WrongPicks = [];
+  state.r3Locked = false;
+  state.r3PickedIndex = -1;
+  if (state.r3Index >= CONFIG.matchMom.length) {
+    state.roundsDone[3] = true;
+    state.r3Index = 0;
+    fanfare();
+    setTimeout(goHub, 200);
+    return;
+  }
+  loadR3();
+  if (typeof syncState === 'function') syncState();
+}
+
+/* ================================================
+   FINALE
+   ================================================ */
+function showFinale() {
+  const banner = document.getElementById('finale-banner');
+  const detail = document.getElementById('finale-detail');
+  if (state.scoreA > state.scoreB) {
+    banner.textContent = `${CONFIG.teamAName} WINS!`;
+    detail.textContent = `${state.scoreA} to ${state.scoreB}. A great showing — Helaman would be proud.`;
+  } else if (state.scoreB > state.scoreA) {
+    banner.textContent = `${CONFIG.teamBName} WINS!`;
+    detail.textContent = `${state.scoreB} to ${state.scoreA}. A great showing — Helaman would be proud.`;
+  } else {
+    banner.textContent = `IT'S A TIE!`;
+    detail.textContent = `${state.scoreA} to ${state.scoreB}. Both armies fought with honor.`;
+  }
+  setTimeout(() => { confettiBurst('gold'); fanfare(); }, 200);
+}
+
+/* ================================================
+   VIDEO (embedded YouTube modal — mode-aware)
+   ================================================ */
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?\/]+)/);
+  return m ? m[1] : null;
+}
+
+function openVideo() {
+  if (MODE === 'host') {
+    // Host: show indicator banner on phone, push state so display plays the video
+    state.videoPlaying = true;
+    document.getElementById('video-host-indicator').classList.add('shown');
+    syncState();
+  } else {
+    // Single-mode (no MODE param) or display: show the modal directly
+    _showVideoModal();
+  }
+}
+
+function _showVideoModal() {
+  const id = extractYouTubeId(CONFIG.videoUrl);
+  if (!id) {
+    if (CONFIG.videoUrl) window.open(CONFIG.videoUrl, '_blank');
+    return;
+  }
+  // Build YouTube embed URL with optional start/end clipping
+  const params = new URLSearchParams({
+    autoplay: '1',
+    rel: '0',
+    modestbranding: '1',
+    playsinline: '1',
+  });
+  if (typeof CONFIG.videoStart === 'number' && CONFIG.videoStart > 0) {
+    params.set('start', String(Math.floor(CONFIG.videoStart)));
+  }
+  if (typeof CONFIG.videoEnd === 'number' && CONFIG.videoEnd > 0) {
+    params.set('end', String(Math.floor(CONFIG.videoEnd)));
+  }
+  const iframe = document.getElementById('video-iframe');
+  iframe.src = `https://www.youtube.com/embed/${id}?${params.toString()}`;
+  const modal = document.getElementById('video-modal');
+  modal.classList.add('shown');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function _hideVideoModal() {
+  const modal = document.getElementById('video-modal');
+  modal.classList.remove('shown');
+  modal.setAttribute('aria-hidden', 'true');
+  setTimeout(() => {
+    document.getElementById('video-iframe').src = '';
+  }, 400);
+}
+
+function closeVideo() {
+  if (MODE === 'host') {
+    state.videoPlaying = false;
+    document.getElementById('video-host-indicator').classList.remove('shown');
+    syncState();
+  } else {
+    _hideVideoModal();
+  }
+}
+
+/* ================================================
+   CRAFT TIMER
+   ================================================ */
+function fmtTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+function updateTimerDisplay() {
+  document.getElementById('timer-num').textContent = fmtTime(state.timerSecondsLeft);
+  const ring = document.getElementById('timer-ring');
+  const total = 600;
+  const fraction = state.timerSecondsLeft / total;
+  const circumference = 578; // 2 * pi * 92
+  ring.style.strokeDashoffset = circumference * (1 - fraction);
+}
+function toggleTimer() {
+  const btn = document.getElementById('timer-toggle');
+  if (state.timerRunning) {
+    clearInterval(state.timerInterval);
+    state.timerRunning = false;
+    btn.textContent = '▶ Resume';
+  } else {
+    state.timerRunning = true;
+    btn.textContent = '⏸ Pause';
+    state.timerInterval = setInterval(() => {
+      if (state.timerSecondsLeft > 0) {
+        state.timerSecondsLeft--;
+        updateTimerDisplay();
+        if (state.timerSecondsLeft === 60) ding();
+        if (state.timerSecondsLeft === 0) {
+          fanfare();
+          clearInterval(state.timerInterval);
+          state.timerRunning = false;
+          btn.textContent = '✓ Time!';
+        }
+      }
+    }, 1000);
+  }
+}
+function resetTimer() {
+  clearInterval(state.timerInterval);
+  state.timerRunning = false;
+  state.timerSecondsLeft = 600;
+  document.getElementById('timer-toggle').textContent = '▶ Start';
+  updateTimerDisplay();
+}
+
+/* ================================================
+   SOUND — Heroic Stripling Warrior Theme
+   All synthesized via Web Audio API (no files needed)
+   ================================================ */
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { return null; }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+/* Helper: simple oscillator tone with envelope */
+function tone(freq, dur=0.18, type='sine', vol=0.15, startOffset=0) {
+  if (!state.soundOn) return;
+  const ctx = ensureAudio(); if (!ctx) return;
+  const t0 = ctx.currentTime + startOffset;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur);
+}
+
+/* Helper: noise burst with optional filter (for percussive hits) */
+function noiseBurst(dur=0.2, filterFreq=400, vol=0.4, startOffset=0) {
+  if (!state.soundOn) return;
+  const ctx = ensureAudio(); if (!ctx) return;
+  const t0 = ctx.currentTime + startOffset;
+  const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random()*2-1) * Math.exp(-i / (data.length * 0.18));
+  }
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.value = filterFreq;
+  const g = ctx.createGain();
+  g.gain.value = vol;
+  src.connect(filt).connect(g).connect(ctx.destination);
+  src.start(t0);
+}
+
+/* Helper: pitch-bending tone (for horn/sword effects) */
+function pitchBend(startFreq, endFreq, dur=0.25, type='sawtooth', vol=0.2, startOffset=0) {
+  if (!state.soundOn) return;
+  const ctx = ensureAudio(); if (!ctx) return;
+  const t0 = ctx.currentTime + startOffset;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(startFreq, t0);
+  osc.frequency.exponentialRampToValueAtTime(endFreq, t0 + dur);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur);
+}
+
+/* ================================================
+   FILE-BASED AUDIO PLAYBACK
+   Pre-loads audio files and plays them on demand.
+   Uses HTML5 Audio for sound effects + background music.
+   ================================================ */
+const AUDIO_FILES = {
+  ding:    'audio/ding.mp3',
+  buzz:    'audio/buzz.mp3',
+  sword:   'audio/sword.mp3',
+  fanfare: 'audio/fanfare.mp3',
+};
+const AUDIO_BG_FILES = {
+  wallofmothers: 'audio/wallofmothers.mp3',
+  wrap:          'audio/wrap.mp3',
+};
+const audioCache = {};       // cached <audio> elements for SFX (cloned per play)
+const audioBgCache = {};     // cached <audio> elements for BG music (single instance, looped)
+
+/* Pre-load all audio files. Called when audio is unlocked. */
+function preloadAudio() {
+  Object.entries(AUDIO_FILES).forEach(([key, src]) => {
+    if (audioCache[key]) return;
+    const a = new Audio(src);
+    a.preload = 'auto';
+    a.load();
+    audioCache[key] = a;
+  });
+  Object.entries(AUDIO_BG_FILES).forEach(([key, src]) => {
+    if (audioBgCache[key]) return;
+    const a = new Audio(src);
+    a.preload = 'auto';
+    a.loop = true;       // BG music loops continuously
+    a.volume = 0.35;     // quiet, sits behind voice
+    a.load();
+    audioBgCache[key] = a;
+  });
+}
+
+/* Synthesized fallbacks — used if audio file fails to load (graceful degradation) */
+function _dingSynth() {
+  if (!state.soundOn) return;
+  tone(880, 0.35, 'triangle', 0.12, 0);
+  tone(1320, 0.30, 'sine', 0.06, 0.01);
+  tone(1760, 0.40, 'sine', 0.05, 0.02);
+  tone(2640, 0.20, 'sine', 0.025, 0.04);
+}
+function _buzzSynth() {
+  if (!state.soundOn) return;
+  pitchBend(220, 130, 0.35, 'sawtooth', 0.18, 0);
+  tone(73, 0.40, 'square', 0.08, 0.02);
+  noiseBurst(0.20, 200, 0.15, 0.05);
+}
+function _swordSynth() {
+  if (!state.soundOn) return;
+  tone(1500, 0.18, 'square', 0.08, 0);
+  tone(2200, 0.25, 'triangle', 0.06, 0.01);
+  noiseBurst(0.05, 4000, 0.15, 0);
+  tone(880, 0.5, 'sine', 0.04, 0.03);
+}
+function _fanfareSynth() {
+  if (!state.soundOn) return;
+  const notes = [
+    { f: 392, d: 0.18, t: 0    }, { f: 392, d: 0.18, t: 0.15 },
+    { f: 523, d: 0.22, t: 0.32 }, { f: 659, d: 0.22, t: 0.55 },
+    { f: 784, d: 0.55, t: 0.78 },
+  ];
+  notes.forEach(n => {
+    tone(n.f,    n.d, 'square',   0.10, n.t);
+    tone(n.f,    n.d, 'sawtooth', 0.06, n.t);
+    tone(n.f/2,  n.d, 'sine',     0.05, n.t);
+  });
+  tone(1568, 0.4, 'triangle', 0.04, 0.85);
+}
+
+const SOUND_SYNTH_FALLBACK = {
+  ding: _dingSynth, buzz: _buzzSynth, sword: _swordSynth, fanfare: _fanfareSynth,
+};
+
+/* Play a SFX file. Clones the cached element so overlapping plays don't cut each other off. */
+function _playFile(key, volume = 1.0) {
+  if (!state.soundOn) return;
+  const cached = audioCache[key];
+  if (!cached) {
+    // File not loaded — use synthesized fallback
+    const fallback = SOUND_SYNTH_FALLBACK[key];
+    if (fallback) fallback();
+    return;
+  }
+  // Clone so successive plays don't restart the same element awkwardly
+  const clone = cached.cloneNode();
+  clone.volume = volume;
+  clone.play().catch(err => {
+    console.warn(`Audio play failed for ${key}, using synth fallback:`, err.message);
+    const fallback = SOUND_SYNTH_FALLBACK[key];
+    if (fallback) fallback();
+  });
+}
+
+/* DING — heroic chime (right answer / reveal) */
+function _dingLocal() { _playFile('ding', 0.85); }
+
+/* BUZZ — wrong / strike */
+function _buzzLocal() { _playFile('buzz', 0.85); }
+
+/* DRUM — kept as synthesized (user liked the current sound). Same code as before. */
+function _drumLocal() {
+  if (!state.soundOn) return;
+  // Sharp leather-strike transient + low body resonance
+  noiseBurst(0.08, 800, 0.5, 0);              // Crack of the strike
+  tone(60, 0.5, 'sine', 0.45, 0.005);          // Deep body resonance
+  tone(80, 0.4, 'sine', 0.25, 0.01);           // Body harmonic
+  pitchBend(120, 50, 0.3, 'triangle', 0.3, 0); // Pitch drop for "boom" feel
+}
+
+/* SWORD HIT — metallic clang */
+function _swordHitLocal() { _playFile('sword', 0.85); }
+
+/* FANFARE — heroic war horn */
+function _fanfareLocal() { _playFile('fanfare', 0.9); }
+
+/* CROSS-DEVICE SOUND DISPATCHER
+   - On host: push a soundCue to Firestore so display plays it on TV
+   - On display: play locally (called from applyRemoteState)
+   - In single-device mode (no MODE param): play locally
+*/
+const SOUND_LOCAL_FNS = {
+  ding: _dingLocal,
+  buzz: _buzzLocal,
+  drum: _drumLocal,
+  swordHit: _swordHitLocal,
+  fanfare: _fanfareLocal,
+};
+
+function _playSoundCueLocal(cueName) {
+  const fn = SOUND_LOCAL_FNS[cueName];
+  if (fn) fn();
+}
+
+function _dispatchSound(cueName) {
+  if (MODE === 'host') {
+    // Push cue to display via Firestore — host phone stays silent
+    state.soundCue = cueName;
+    state.soundCueCounter = (state.soundCueCounter || 0) + 1;
+    if (typeof syncState === 'function') syncState();
+  } else {
+    // single-device or display: play locally
+    _playSoundCueLocal(cueName);
+  }
+}
+
+// Public wrappers — every existing call site uses these
+function ding()     { _dispatchSound('ding'); }
+function buzz()     { _dispatchSound('buzz'); }
+function drum()     { _dispatchSound('drum'); }
+function swordHit() { _dispatchSound('swordHit'); }
+function fanfare()  { _dispatchSound('fanfare'); }
+
+/* Audio test button — host can verify TV is producing sound */
+function testDisplayAudio() {
+  if (MODE === 'host') {
+    // Push a fanfare cue — should play on display via Firestore
+    _dispatchSound('fanfare');
+  } else {
+    // single/display: just test locally
+    _fanfareLocal();
+  }
+}
+
+/* ================================================
+   BACKGROUND MUSIC — ambient Nephite-style loops
+   For Wall of Mothers and Wrap-Up (emotional moments)
+   ================================================ */
+let bgMusicState = {
+  current: null,        // 'wallofmothers' | 'wrap' | null
+  audioEl: null,        // active <audio> element
+  fadeInterval: null,   // setInterval handle for fade animation
+};
+
+const BG_TARGET_VOLUME = 0.35;  // quiet — sits behind voice
+const BG_FADE_MS = 1200;        // gentle 1.2s fade in/out
+
+/* Stop current BG music with a fade-out */
+function _stopBgMusic() {
+  if (bgMusicState.fadeInterval) {
+    clearInterval(bgMusicState.fadeInterval);
+    bgMusicState.fadeInterval = null;
+  }
+  const a = bgMusicState.audioEl;
+  if (!a) {
+    bgMusicState.current = null;
+    return;
+  }
+  // Fade out, then stop and clear
+  const startVol = a.volume;
+  const steps = 24;
+  const stepDur = BG_FADE_MS / steps;
+  const stepVol = startVol / steps;
+  let i = 0;
+  bgMusicState.fadeInterval = setInterval(() => {
+    i++;
+    a.volume = Math.max(0, startVol - stepVol * i);
+    if (i >= steps) {
+      clearInterval(bgMusicState.fadeInterval);
+      bgMusicState.fadeInterval = null;
+      try { a.pause(); a.currentTime = 0; } catch(e) {}
+      bgMusicState.audioEl = null;
+      bgMusicState.current = null;
+    }
+  }, stepDur);
+}
+
+/* Play a BG music track with fade-in */
+function _playBgFile(key) {
+  if (!state.soundOn) return;
+  const audioEl = audioBgCache[key];
+  if (!audioEl) {
+    console.warn(`BG music not loaded: ${key}`);
+    return;
+  }
+  bgMusicState.audioEl = audioEl;
+  bgMusicState.current = key;
+  audioEl.volume = 0;
+  audioEl.currentTime = 0;
+  audioEl.play().catch(err => {
+    console.warn(`BG music play failed for ${key}:`, err.message);
+  });
+  // Fade in to target volume
+  if (bgMusicState.fadeInterval) clearInterval(bgMusicState.fadeInterval);
+  const steps = 24;
+  const stepDur = BG_FADE_MS / steps;
+  const stepVol = BG_TARGET_VOLUME / steps;
+  let i = 0;
+  bgMusicState.fadeInterval = setInterval(() => {
+    i++;
+    if (bgMusicState.current !== key) {
+      // Track changed mid-fade — abort
+      clearInterval(bgMusicState.fadeInterval);
+      bgMusicState.fadeInterval = null;
+      return;
+    }
+    audioEl.volume = Math.min(BG_TARGET_VOLUME, stepVol * i);
+    if (i >= steps) {
+      clearInterval(bgMusicState.fadeInterval);
+      bgMusicState.fadeInterval = null;
+    }
+  }, stepDur);
+}
+
+function _startBgMusicWallOfMothers() {
+  if (bgMusicState.current === 'wallofmothers') return;
+  _stopBgMusic();
+  // Brief delay to let stop-fade complete before starting next track
+  setTimeout(() => _playBgFile('wallofmothers'), BG_FADE_MS + 50);
+}
+
+function _startBgMusicWrap() {
+  if (bgMusicState.current === 'wrap') return;
+  _stopBgMusic();
+  setTimeout(() => _playBgFile('wrap'), BG_FADE_MS + 50);
+}
+
+/* Display syncs bgMusic state from host */
+function syncBgMusic(bgMusic) {
+  if (bgMusicState.current === bgMusic) return; // already in correct state
+  if (bgMusic === 'wallofmothers') _startBgMusicWallOfMothers();
+  else if (bgMusic === 'wrap') _startBgMusicWrap();
+  else _stopBgMusic();
+}
+
+/* Host-side helpers to set bgMusic state */
+function setBgMusic(track) {
+  state.bgMusic = track;
+  if (MODE === 'host') {
+    if (typeof syncState === 'function') syncState();
+  } else {
+    // single device: also start music locally
+    syncBgMusic(track);
+  }
+}
+
+function toggleSound() {
+  state.soundOn = !state.soundOn;
+  document.getElementById('sound-btn').textContent = state.soundOn ? '🔊' : '🔇';
+  if (state.soundOn) ding();
+}
+
+/* ================================================
+   CONFETTI
+   ================================================ */
+const canvas = document.getElementById('confetti-canvas');
+const ctx2d = canvas.getContext('2d');
+function sizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+sizeCanvas();
+window.addEventListener('resize', sizeCanvas);
+let confettiPieces = [];
+const CONFETTI_PALETTES = {
+  gold:  ['#f4b840','#e89c2e','#fff4d6','#ffd966','#b8860b'],
+  a:     ['#60a5fa','#2563eb','#1e3a8a','#93c5fd','#dbeafe'],
+  b:     ['#e8923c','#c2722e','#8b4513','#fbbf24','#fcd34d'],
+};
+function confettiBurst(palette='gold') {
+  const colors = CONFETTI_PALETTES[palette] || CONFETTI_PALETTES.gold;
+  const count = 80;
+  for (let i = 0; i < count; i++) {
+    confettiPieces.push({
+      x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 14,
+      vy: -Math.random() * 16 - 6,
+      g: 0.4,
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.3,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      life: 0,
+      max: 120 + Math.random() * 40,
+    });
+  }
+  if (!confettiRunning) animateConfetti();
+}
+let confettiRunning = false;
+function animateConfetti() {
+  confettiRunning = true;
+  ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+  confettiPieces = confettiPieces.filter(p => p.life < p.max);
+  confettiPieces.forEach(p => {
+    p.life++;
+    p.vy += p.g;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.rot += p.vr;
+    ctx2d.save();
+    ctx2d.translate(p.x, p.y);
+    ctx2d.rotate(p.rot);
+    ctx2d.fillStyle = p.color;
+    ctx2d.globalAlpha = Math.max(0, 1 - p.life / p.max);
+    ctx2d.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.5);
+    ctx2d.restore();
+  });
+  if (confettiPieces.length > 0) requestAnimationFrame(animateConfetti);
+  else { confettiRunning = false; ctx2d.clearRect(0, 0, canvas.width, canvas.height); }
+}
+
+/* ================================================
+   MOTES (background)
+   ================================================ */
+function spawnMotes() {
+  const wrap = document.getElementById('motes');
+  for (let i = 0; i < 28; i++) {
+    const m = document.createElement('div');
+    m.className = 'mote';
+    m.style.left = Math.random() * 100 + 'vw';
+    m.style.animationDuration = (12 + Math.random() * 16) + 's';
+    m.style.animationDelay = (Math.random() * 20) + 's';
+    m.style.opacity = 0.3 + Math.random() * 0.4;
+    m.style.transform = `scale(${0.5 + Math.random()})`;
+    wrap.appendChild(m);
+  }
+}
+spawnMotes();
+
+/* ================================================
+   KEYBOARD
+   ================================================ */
+document.addEventListener('keydown', (e) => {
+  // If video modal is open, ESC closes it and other keys are intercepted
+  const videoModal = document.getElementById('video-modal');
+  const hostInd = document.getElementById('video-host-indicator');
+  if ((videoModal && videoModal.classList.contains('shown')) ||
+      (hostInd && hostInd.classList.contains('shown'))) {
+    if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      closeVideo();
+    }
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); goNext(); }
+  if (e.key === 'ArrowLeft') goBack();
+  if (e.key === 'h' || e.key === 'H') goHub();
+  if (e.key === 'r' || e.key === 'R') restart();
+  if (e.key === 's' || e.key === 'S') toggleSound();
+});
+
+/* ================================================
+   BOOT
+   ================================================ */
+/* ================================================
+   BOOT — mode-aware
+   ================================================ */
+// Initial team names from config
+document.getElementById('team-a-name').textContent = CONFIG.teamAName;
+document.getElementById('team-b-name').textContent = CONFIG.teamBName;
+
+function bootSetupScreen() {
+  document.body.classList.add('on-setup');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-setup').classList.add('active');
+  document.getElementById('setup-room-code').textContent = ROOM;
+  // QR code points to the HOST URL — when iPhone scans a QR shown on the laptop,
+  // the iPhone instantly becomes host on the laptop's room code.
+  const hostURL = getQueryLink('host');
+  const qr = document.getElementById('setup-qr-host');
+  if (qr) {
+    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(hostURL)}`;
+  }
+  // Continue as Host (uses the auto-generated room code)
+  document.getElementById('setup-host-btn').onclick = () => {
+    window.location.href = getQueryLink('host');
+  };
+  // Continue as Display (uses the auto-generated room code)
+  const displayBtn = document.getElementById('setup-display-btn');
+  if (displayBtn) {
+    displayBtn.onclick = () => { window.location.href = getQueryLink('display'); };
+  }
+  // Join existing room as host (typed in from another device's setup screen)
+  const joinBtn = document.getElementById('setup-join-btn');
+  const joinInput = document.getElementById('setup-join-input');
+  if (joinBtn && joinInput) {
+    const doJoin = () => {
+      const code = (joinInput.value || '').trim().toUpperCase();
+      if (code.length !== 4) {
+        joinInput.style.borderColor = 'var(--ember)';
+        joinInput.focus();
+        return;
+      }
+      ROOM = code;
+      window.location.href = getQueryLink('host');
+    };
+    joinBtn.onclick = doJoin;
+    joinInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doJoin();
+    });
+  }
+}
+
+function installAutoSync() {
+  // Wrap state-mutating host functions to call syncState() after they run.
+  ['award', 'r1Reveal', 'r1Next', 'r2Next', 'r3Next',
+   'toggleStrike', 'revealFeud', 'pickMom', 'tapArmor',
+   'toggleTimer', 'resetTimer', 'restart'].forEach(name => {
+    const orig = window[name];
+    if (typeof orig === 'function') {
+      window[name] = function(...args) {
+        const r = orig.apply(this, args);
+        syncState();
+        return r;
+      };
+    }
+  });
+  // Special wrap for showStep — don't sync if call originated from applyRemoteState
+  const origShowStep = window.showStep;
+  window.showStep = function(i, remote) {
+    const r = origShowStep.call(this, i, remote);
+    if (!remote) syncState();
+    return r;
+  };
+  // Hook the timer interval to push updates every second in host mode
+  const origToggleTimer = window.toggleTimer;
+  // Note: timer interval is set inside toggleTimer; we want each tick to syncState too
+  // Easier: monkey-patch the original setInterval body. Instead, we re-implement here.
+}
+
+/* ================================================
+   TECH CHECK MODE — accessible via ?check=1
+   ================================================ */
+const CHECK_LIST = [
+  { id: 'fonts', title: 'Fonts loaded', desc: 'Cinzel + Cormorant Garamond + Bebas Neue must render correctly. Look at this card — does the title above use a heroic Roman serif?', action: 'visual' },
+  { id: 'gradient', title: 'Gold gradient text', desc: 'The "Tech Check" title at the top should have a gradient from cream to gold to deep amber, with a soft glow.', action: 'visual' },
+  { id: 'motes', title: 'Background motes', desc: 'Look behind everything — small gold dots should drift slowly upward across the screen.', action: 'visual' },
+  { id: 'ding', title: 'Ding (audio file)', desc: 'Bright ding from real audio file — plays on right answers and reveals.', action: 'sound', fn: 'ding' },
+  { id: 'drum', title: 'War drum (synthesized)', desc: 'Deep leather-strike drum — kept synthesized per preference. Plays on each line of the battle cry.', action: 'sound', fn: 'drum' },
+  { id: 'buzz', title: 'Buzz (audio file)', desc: 'Wrong-answer buzz from real audio file. Plays on wrong answers / strikes.', action: 'sound', fn: 'buzz' },
+  { id: 'swordhit', title: 'Sword strike (audio file)', desc: 'Metallic clang from real audio file.', action: 'sound', fn: 'swordHit' },
+  { id: 'fanfare', title: 'Fanfare (audio file)', desc: 'Triumphant fanfare from real audio file. Plays at finale and round completions.', action: 'sound', fn: 'fanfare' },
+  { id: 'confettiGold', title: 'Gold confetti', desc: 'Burst of gold confetti pieces falling from center.', action: 'confetti', fn: 'gold' },
+  { id: 'confettiA', title: 'Team A (lapis blue) confetti', desc: 'Lapis-blue confetti shower — fires when Team A scores.', action: 'confetti', fn: 'a' },
+  { id: 'confettiB', title: 'Team B (copper) confetti', desc: 'Warm copper-amber confetti shower — fires when Team B scores.', action: 'confetti', fn: 'b' },
+  { id: 'video', title: 'YouTube video embed', desc: 'Opens the embedded "Helaman\'s Stripling Soldiers Fight for Freedom" video. Verify it plays AND audio comes from the TV speakers, not your phone.', action: 'video' },
+  { id: 'tv', title: 'TV mirroring & resolution', desc: 'Confirm the show is mirrored to the actual TV in the Primary room. Check that text is readable from the back row.', action: 'manual' },
+  { id: 'sync', title: 'Multi-device sync (only if using both devices)', desc: 'On host phone, tap any control. The TV should mirror your tap within ~1 second. Skip this if running single-device.', action: 'manual' },
+  { id: 'dnd', title: 'Do Not Disturb on phone', desc: 'Make sure your phone is in DND or Focus mode so no notifications pop up over the show.', action: 'manual' },
+];
+
+const checkResults = {};
+
+function renderCheckGrid() {
+  const grid = document.getElementById('check-grid');
+  if (!grid) return;
+  grid.innerHTML = CHECK_LIST.map(c => {
+    const status = checkResults[c.id];
+    const cls = status === 'passed' ? 'passed' : status === 'failed' ? 'failed' : '';
+    const statusText = status === 'passed' ? '✓ CONFIRMED' : status === 'failed' ? '✗ FAILED' : 'PENDING';
+    let actionHTML = '';
+    if (c.action === 'sound') {
+      actionHTML = `<button class="check-btn" onclick="playCheckSound('${c.fn}', '${c.id}')">▶ Play</button>`;
+    } else if (c.action === 'confetti') {
+      actionHTML = `<button class="check-btn" onclick="playCheckConfetti('${c.fn}', '${c.id}')">▶ Test</button>`;
+    } else if (c.action === 'video') {
+      actionHTML = `<button class="check-btn" onclick="testCheckVideo('${c.id}')">▶ Open Video</button>`;
+    } else if (c.action === 'visual') {
+      actionHTML = `<span style="font-family: 'Cormorant Garamond', serif; font-style: italic; color: var(--parchment-dim); font-size: 0.85rem;">Verify visually →</span>`;
+    } else {
+      actionHTML = `<span style="font-family: 'Cormorant Garamond', serif; font-style: italic; color: var(--parchment-dim); font-size: 0.85rem;">Manual check →</span>`;
+    }
+    actionHTML += `<button class="check-btn confirm" onclick="setCheck('${c.id}', 'passed')">✓ Works</button>`;
+    actionHTML += `<button class="check-btn" onclick="setCheck('${c.id}', 'failed')">✗ Fails</button>`;
+    return `<div class="check-card ${cls}" id="check-${c.id}">
+      <div class="check-title">${c.title} <span class="check-status">${statusText}</span></div>
+      <div class="check-desc">${c.desc}</div>
+      <div class="check-action">${actionHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+function setCheck(id, status) {
+  checkResults[id] = status;
+  renderCheckGrid();
+}
+function playCheckSound(fn, id) {
+  ensureAudio();
+  if (typeof window[fn] === 'function') window[fn]();
+}
+function playCheckConfetti(palette, id) {
+  confettiBurst(palette);
+}
+function testCheckVideo(id) {
+  ensureAudio();
+  openVideo();
+}
+function runAllChecks() {
+  // Sequence audio + confetti for quick verification
+  const sounds = ['ding', 'drum', 'buzz', 'swordHit', 'fanfare'];
+  ensureAudio();
+  sounds.forEach((fn, i) => setTimeout(() => window[fn] && window[fn](), i * 800));
+  setTimeout(() => confettiBurst('gold'), 5500);
+  setTimeout(() => confettiBurst('a'), 6100);
+  setTimeout(() => confettiBurst('b'), 6700);
+}
+
+function bootTechCheck() {
+  document.body.classList.add('on-techcheck');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-techcheck').classList.add('active');
+  renderCheckGrid();
+}
+
+
+async function bootApp() {
+  // Tech check mode — bypasses everything else
+  if (URLPARAMS.get('check') === '1') {
+    bootTechCheck();
+    return;
+  }
+  if (PARAMLESS) {
+    // Setup / landing screen
+    bootSetupScreen();
+    return;
+  }
+  if (MODE === 'host') {
+    document.body.classList.add('host-mode');
+    setConnPill(false, 'CONNECTING…');
+    await initFirebase();
+    if (firebaseReady) {
+      installAutoSync();
+      // Initial UI
+      showStep(0);
+      updateScores();
+      updateTimerDisplay();
+      // Push initial state
+      syncState();
+    } else {
+      // Fallback: still let the show run locally (no sync)
+      showStep(0);
+      updateScores();
+      updateTimerDisplay();
+    }
+  } else if (MODE === 'display') {
+    document.body.classList.add('display-mode');
+    setConnPill(false, 'CONNECTING…');
+    await initFirebase();
+    updateScores();
+    updateTimerDisplay();
+    if (firebaseReady) {
+      startListening();
+    }
+    // Stay on cover screen until first state arrives
+    showStep(0, true);
+
+    // Show the audio unlock overlay — user must tap once to enable
+    // sound on the display device (browser autoplay policy)
+    const overlay = document.getElementById('audio-unlock');
+    const unlockBtn = document.getElementById('audio-unlock-btn');
+    if (overlay && unlockBtn) {
+      overlay.style.display = 'flex';
+      unlockBtn.onclick = () => {
+        ensureAudio();              // unlock AudioContext (still needed for synthesized drum)
+        preloadAudio();             // pre-load all SFX + BG music files into cache
+        // Play a quick test tone so the user hears sound is working
+        _dingLocal();
+        overlay.style.display = 'none';
+      };
+    }
+  }
+}
+
+bootApp();
+
+// Wake audio on first interaction (host stays silent in multi-device mode but display preloads)
+window.addEventListener('click', () => { ensureAudio(); preloadAudio(); }, { once: true });
+window.addEventListener('touchstart', () => { ensureAudio(); preloadAudio(); }, { once: true });
+
+// In host mode, also sync the timer's per-second updates
+if (MODE === 'host') {
+  setInterval(() => {
+    if (state.timerRunning) syncState();
+  }, 1000);
+}
+</script>
+</body>
+</html>
