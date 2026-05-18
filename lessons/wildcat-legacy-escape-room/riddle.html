@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 The Hidden Mark</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Fraunces:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0B1220;color:#FFF5E1;font-family:'Fraunces',serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.card{max-width:420px;width:100%;background:linear-gradient(145deg,#14213D,#1E2A4A);border:2px solid rgba(230,57,70,0.3);border-radius:16px;padding:40px 32px;text-align:center;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#E63946,#FFB627,#E63946);}
+.tag{display:inline-block;background:#E63946;color:#FFF5E1;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:4px 16px;border-radius:20px;margin-bottom:20px;}
+.paw{font-size:36px;margin-bottom:16px;}
+.title{font-family:'Big Shoulders Display',sans-serif;font-size:28px;font-weight:900;color:#E63946;text-transform:uppercase;letter-spacing:3px;margin-bottom:24px;}
+.riddle{font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:rgba(255,245,225,0.85);line-height:1.8;margin-bottom:24px;}
+.riddle .highlight{color:#FFB627;font-weight:600;}
+.divider{width:60px;height:1px;background:linear-gradient(90deg,transparent,#E63946,transparent);margin:0 auto 24px;}
+.prompt{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;color:rgba(148,163,184,0.6);text-transform:uppercase;margin-bottom:16px;}
+.answer-area{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;}
+.answer-input{background:rgba(255,255,255,0.04);border:1px solid rgba(244,162,97,0.3);border-radius:10px;padding:14px 20px;font-family:'Big Shoulders Display',sans-serif;font-size:20px;color:#FFF5E1;text-align:center;text-transform:uppercase;letter-spacing:3px;outline:none;width:200px;transition:border-color 0.3s;}
+.answer-input:focus{border-color:#F4A261;}
+.check-btn{background:linear-gradient(135deg,#E63946,#FF4D5E);color:#FFF5E1;border:none;border-radius:10px;padding:14px 24px;font-family:'Big Shoulders Display',sans-serif;font-size:16px;font-weight:800;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all 0.3s;}
+.check-btn:hover{box-shadow:0 4px 20px rgba(230,57,70,0.3);}
+.result{margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;min-height:20px;}
+.result.wrong{color:#E63946;}
+.result.right{color:#22C55E;font-size:16px;}
+.footer{margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:3px;color:rgba(148,163,184,0.2);text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div class="card">
+    <div class="tag">🎨 The Hidden Mark</div>
+    <div class="paw">🐾</div>
+    <div class="title">You Found the Mark</div>
+    <div class="riddle">
+        Before you were born, He <span class="highlight">knew your name</span>.<br><br>
+        He calls you <span class="highlight">precious</span>.<br>
+        He calls you <span class="highlight">chosen</span>.<br><br>
+        What does He call you?
+    </div>
+    <div class="divider"></div>
+    <div class="prompt">Enter your answer</div>
+    <div class="answer-area">
+        <input type="text" class="answer-input" id="answer" placeholder="_ _ _ _ _ _ _" autocomplete="off">
+        <button class="check-btn" onclick="checkAnswer()">Check</button>
+    </div>
+    <div class="result" id="result"></div>
+    <div class="footer">Wildcat Legacy 2026</div>
+</div>
+<script>
+function checkAnswer(){
+    var a=document.getElementById('answer').value.trim().toUpperCase();
+    var r=document.getElementById('result');
+    if(a==='BELOVED'){
+        r.className='result right';
+        r.textContent='✅ CORRECT — Enter this on your phone!';
+    } else {
+        r.className='result wrong';
+        r.textContent='Not quite — read the riddle again.';
+        setTimeout(function(){r.textContent='';},3000);
+    }
+}
+document.getElementById('answer').addEventListener('keydown',function(e){if(e.key==='Enter')checkAnswer();});
+</script>
+</body>
+</html>
